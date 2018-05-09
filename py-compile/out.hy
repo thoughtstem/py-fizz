@@ -1,0 +1,1 @@
+(defn test2 [] (do 6)) (defn test [] (do 4))

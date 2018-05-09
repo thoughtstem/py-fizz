@@ -1,0 +1,81 @@
+
+
+Grand unifying theory:
+  * We are building the toys of the future.
+  * The toys of the future are language toys.
+  * All children will grow up knowing how to code.
+  * Toy-based education?  (Not game-based...)
+
+
+Python course!!
+
+  * Do a DSL for making puzzles like The Incredible Machine
+  * It compiles to Python / Pymunk.
+  * The language will feel like 2htpd/image -- and even use it:
+       * To render preview images
+       * Shapes automatically get properties of physics
+       * Or you can bind a shape to a bundle of physics properties and use it like an object
+  * (above ball ball)
+
+  * Can take screenshot from pygame, read it back as the output of the Racket program.  Now it's end-to-end Racket -> a library for generating images after a physics simulation...
+
+  * Compile out to something that could be upstream of a more complex pymunk/pygame -- if people want to add game-like features using Python (or a future Racket-based tool)
+
+  * only support circle and poly as actual physics shapes (lift those functions to capture the vertex/rotation/scale info?)
+    * The rest of the htdp images would just be cosmetics on top of circle or poly colliders
+
+  * Minikanren can generate random levels of the incredible machine...
+
+
+
+Random
+
+Thoughtstem secret sauce: A platform for deploying new, very targeted DSL-based education
+
+* (analyse-program) -> Spits out graphs about program
+  * Use in games (fix/improve this code)
+  * Use to encourage kids to push boundaries...
+
+* Curriculum idea:  Come up with one question to ask ThoughtSTEM CEO...
+  * Will respond by end of day...
+
+
+Python course
+
+We don't have to say Racket is better.  
+  Python is better in the sense that it has Pymunk/Pygames.
+  Racket is better in the sense that is has a great IDE and is a DSL language workbench
+
+  The take-away is that compilers are awesome.  Code in either language you want,
+     the Racket DSL is always going to be better than the Python one.
+     Kids might conclude that Racket is better (to write in) than Python... but that's not a lie,
+        in this domain, in this world, with the universe as it is today, that's the truth...
+     If they've generalized too much, that's their fault.
+
+
+Epistemic frame shift....
+  * They think they know what "writing in python" means, but it's much more complex than that. 
+  * Spend first day showing some really compelling examples of where compiling saves a lot of typing
+  * Set up compilers as one of the most advanced topics in computer science...
+  * Make them deeply aware of the toolchain and its benefits
+  * End with... that's why Racket is so powerful...
+
+
+* Learning goal: Racket is more (the most?) advanced
+* Learning goal: Python is cool, Racket is cool
+* Learning goal: Racket is more advanced than Python
+   * Whys???
+* Learning goal: Langauge Oriented Programming?
+* Learning goal: ThoughtSTEM's CEO uses Racket.  Why?
+
+* PL history.  Where did Python come from?  Who invented it?  Why?
+
+
+* Discussion.  What makes a programming language powerful??
+
+
+* Python is just Python
+* Racket is a language for making new languageso
+
+* You can write your Python code yourself, or you can write your Python code with Racket.  Which will you choose?  
+

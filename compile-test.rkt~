@@ -1,0 +1,12 @@
+#lang racket
+
+(require 2htdp/image)
+(require circuit-playground/circuit-playground-module)
+
+(overlay
+  (circle 8 "solid" "blue")
+  (circle 16 "solid" "red"))
+
+(define (test)
+  4)
+
