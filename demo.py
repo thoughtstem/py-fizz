@@ -1,123 +1,84 @@
+import math
 
-
-__version__ = "$Id:$"
-__docformat__ = "reStructuredText"
-
-import pygame
-from pygame.locals import *
-from pygame.color import *
 import pymunk
-import pymunk.pygame_util
+
+from pyphysicssandbox import *
+import pygame
 from pymunk import Vec2d
-import math, sys, random
 
+def hit_ball(keys):
+#    if mouse_clicked():
+#        ball1.hit((0, -400000), ball1.position)
+
+    if constants.K_RIGHT in keys:
+        floor.surface_velocity = (100, 0)
+    elif constants.K_LEFT in keys:
+        floor.surface_velocity = (-100, 0)
+
+
+
+window('Shape Methods & Properties', 600, 600)
+
+user_shapes = []
+image_bindings = []
+
+image22 = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/wheel.png")
+circle27 = ball((340, 340), 40)
+circle27.color = Color("red")
+circle27.group = 27
+#No images for this object...
+user_shapes.append(circle27)
+circle28 = ball((408, 340), 28)
+circle28.color = Color("blue")
+circle28.group = 28
+#No images for this object...
+user_shapes.append(circle28)
+circle21 = ball((348, 505), 10)
+circle21.color = Color("yellow")
+circle21.group = 21
+image_bindings.append([circle21, image22])
+user_shapes.append(circle21)
+circle24 = ball((393, 505), 20)
+circle24.color = Color("orange")
+circle24.group = 24
+#No images for this object...
+user_shapes.append(circle24)
+
+floor = static_box((0, 590), 600, 10)
+floor.elasticity = 0.0
+
+add_observer(hit_ball)
+
+
+def flipy(y):
+    return -y+600
+
+def image_for(s):
+  global image_bindings
+  for b in image_bindings:
+    if b[0] == s:
+      return b[1]
+  return False
+
+def test(keys):
+  global user_shapes
+  for s in user_shapes:
+    if(not image_for(s)):
+      continue
+
+    p = s.body.position
+    p = Vec2d(p.x, p.y)
     
-pygame.init()
-screen = pygame.display.set_mode((600, 600))
-clock = pygame.time.Clock()
-running = True
-
-### Physics stuff
-space = pymunk.Space()
-space.gravity = (0.0, -900.0)
-draw_options = pymunk.pygame_util.DrawOptions(screen)
-
-## Balls
-balls = []
-   
-### walls
-static_body = space.static_body
-static_lines = [
-	pymunk.Segment(static_body, (0.0, 0.0), (600.0, 0.0), 0.0),
-	pymunk.Segment(static_body, (600.0, 0.0), (600.0, 600.0), 0.0),
-	pymunk.Segment(static_body, (600.0, 600.0), (0.0, 600.0), 0.0),
-	pymunk.Segment(static_body, (0.0, 600.0), (0.0, 0.0), 0.0),
-                ]  
-
-for line in static_lines:
-    line.elasticity = 0.95
-    line.friction = 0.9
-space.add(static_lines)
-
-ticks_to_next_ball = 10
-
-
-def circle(x,y, r, color):
-	global space
-	global balls
-	mass = 10
-	inertia = pymunk.moment_for_circle(mass, 0, r, (0,0))
-	body = pymunk.Body(mass, inertia)
-
-	shape = pymunk.Circle(body, r, (0,0))
-		
-	body.position = x, y
-	shape.elasticity = 0.95
-	shape.friction = 0.9
-	shape.color = pygame.color.THECOLORS[color]
-	space.add(body, shape)
-	balls.append(shape)
-
-def poly(x,y, color, verts):
-	global space
-	global balls
-	mass = 10
-	radius = 25
-	inertia = pymunk.moment_for_circle(mass, 0, radius, (0,0))
-	body = pymunk.Body(mass, inertia)
-
-	shape = pymunk.Poly(body,  verts)
-		
-	body.position = x, y
-	shape.elasticity = 0.95
-	shape.friction = 0.9
-	shape.color = pygame.color.THECOLORS[color]
-	space.add(body, shape)
-	balls.append(shape)
-
-#vs = [(0, -25),(30, 25),(-30, 25)]
-#circle(random.randint(115,350), 400, "red")
-#poly(random.randint(115,350), 400, "yellow", vs)
-#poly(random.randint(115,350), 400, "blue", vs)
-#poly(random.randint(115,350), 400, "green", vs)
-#poly(random.randint(115,350), 400, "purple", vs)
-
-circle(300,313,35,"orange")
-circle(312,383,23,"yellow")
-circle(370,314,39,"blue")
-circle(391,392,18,"red")
-circle(448,300,38,"orange")
-circle(453,376,33,"yellow")
-circle(539,332,12,"blue")
-circle(524,356,27,"red")
-circle(578,316,32,"orange")
-circle(587,380,23,"yellow")
-circle(643,320,25,"blue")
-circle(642,370,26,"red")
-
-while running:
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            running = False
-        elif event.type == KEYDOWN and event.key == K_ESCAPE:
-            running = False
-        elif event.type == KEYDOWN and event.key == K_p:
-            pygame.image.save(screen, "bouncing_balls.png")
-            
+    angle_degrees    = math.degrees(s.body.angle) 
+    rotated_logo_img = pygame.transform.rotate(image_for(s), angle_degrees)
     
-    ### Clear screen
-    screen.fill(THECOLORS["white"])
+    offset = Vec2d(rotated_logo_img.get_size()) / 2.
+    p      = p - offset
     
-    balls_to_remove = []
+    screen = pygame.display.get_surface()
+    screen.blit(rotated_logo_img, p)
 
-    space.debug_draw(draw_options)
 
-    ### Update physics
-    dt = 1.0/60.0
-    for x in range(1):
-        space.step(dt)
-    
-    ### Flip screen
-    pygame.display.flip()
-    clock.tick(50)
-    pygame.display.set_caption("fps: " + str(clock.get_fps()))
+add_observer(test)
+
+run()
