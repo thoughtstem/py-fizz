@@ -17,35 +17,50 @@ def hit_ball(keys):
 
 
 
-window('Shape Methods & Properties', 600, 600)
+window('Shape Methods & Properties', 300, 310)
 
 user_shapes = []
 image_bindings = []
 
-image22 = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/wheel.png")
-circle27 = ball((340, 340), 40)
-circle27.color = Color("red")
-circle27.group = 27
-#No images for this object...
-user_shapes.append(circle27)
-circle28 = ball((408, 340), 28)
-circle28.color = Color("blue")
-circle28.group = 28
-#No images for this object...
-user_shapes.append(circle28)
-circle21 = ball((348, 505), 10)
-circle21.color = Color("yellow")
-circle21.group = 21
-image_bindings.append([circle21, image22])
-user_shapes.append(circle21)
-circle24 = ball((393, 505), 20)
-circle24.color = Color("orange")
-circle24.group = 24
-#No images for this object...
-user_shapes.append(circle24)
+obj8_0 = static_box((150, 305), 250, 10)
+obj8_0.color = Color("white")
+obj8_0.group = 8
+obj8_0_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj8.png")
+image_bindings.append([obj8_0, obj8_0_image])
+user_shapes.append(obj8_0)
+obj10_1 = cosmetic_ball((150, 150), 150)
+obj10_1.color = Color("white")
+obj10_1.group = 10
+obj10_1_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj10.png")
+image_bindings.append([obj10_1, obj10_1_image])
+user_shapes.append(obj10_1)
+obj5_2 = ball((75, 100), 50)
+obj5_2.color = Color("white")
+obj5_2.group = 5
+obj5_2_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj5.png")
+image_bindings.append([obj5_2, obj5_2_image])
+user_shapes.append(obj5_2)
+obj3_3 = ball((125, 25), 25)
+obj3_3.color = Color("white")
+obj3_3.group = 3
+obj3_3_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj3.png")
+image_bindings.append([obj3_3, obj3_3_image])
+user_shapes.append(obj3_3)
+obj2_4 = ball((75, 25), 25)
+obj2_4.color = Color("white")
+obj2_4.group = 2
+obj2_4_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj2.png")
+image_bindings.append([obj2_4, obj2_4_image])
+user_shapes.append(obj2_4)
+obj1_5 = ball((25, 25), 25)
+obj1_5.color = Color("white")
+obj1_5.group = 1
+obj1_5_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj1.png")
+image_bindings.append([obj1_5, obj1_5_image])
+user_shapes.append(obj1_5)
 
-floor = static_box((0, 590), 600, 10)
-floor.elasticity = 0.0
+#floor = static_box((0, 590), 600, 10)
+#floor.elasticity = 0.0
 
 add_observer(hit_ball)
 
@@ -66,10 +81,16 @@ def test(keys):
     if(not image_for(s)):
       continue
 
-    p = s.body.position
-    p = Vec2d(p.x, p.y)
-    
-    angle_degrees    = math.degrees(s.body.angle) 
+    if(s.body):
+      p = Vec2d(s.body.position.x, s.body.position.y)
+    else:
+      p = Vec2d(s._x, s._y)
+
+    angle = 0
+    if(s.body):
+      angle = s.body.angle
+
+    angle_degrees    = math.degrees(angle) 
     rotated_logo_img = pygame.transform.rotate(image_for(s), angle_degrees)
     
     offset = Vec2d(rotated_logo_img.get_size()) / 2.

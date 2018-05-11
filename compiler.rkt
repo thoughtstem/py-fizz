@@ -5,8 +5,10 @@
 (define (program->string p)
   (~a p))
 
-(define (compile p file-name)
-  (define final (format (boiler) (program->string p)))
+(define (compile p file-name w h)
+  (define final (format (boiler)
+                        w h
+                        (program->string p)))
   (with-output-to-file file-name #:exists 'replace
     (lambda () (printf final)))
   (system (string-append "PYTHONPATH=/Users/thoughtstem/Dev/Python/py-fizzery/pygame/pyphysicssandbox /usr/local/bin/python3 " file-name)))
@@ -36,15 +38,15 @@ def hit_ball(keys):
 
 
 
-window('Shape Methods & Properties', 600, 600)
+window('Shape Methods & Properties', ~a, ~a)
 
 user_shapes = []
 image_bindings = []
 
 ~a
 
-floor = static_box((0, 590), 600, 10)
-floor.elasticity = 0.0
+#floor = static_box((0, 590), 600, 10)
+#floor.elasticity = 0.0
 
 add_observer(hit_ball)
 
@@ -65,10 +67,16 @@ def test(keys):
     if(not image_for(s)):
       continue
 
-    p = s.body.position
-    p = Vec2d(p.x, p.y)
-    
-    angle_degrees    = math.degrees(s.body.angle) 
+    if(s.body):
+      p = Vec2d(s.body.position.x, s.body.position.y)
+    else:
+      p = Vec2d(s._x, s._y)
+
+    angle = 0
+    if(s.body):
+      angle = s.body.angle
+
+    angle_degrees    = math.degrees(angle) 
     rotated_logo_img = pygame.transform.rotate(image_for(s), angle_degrees)
     
     offset = Vec2d(rotated_logo_img.get_size()) / 2.
