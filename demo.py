@@ -17,47 +17,65 @@ def hit_ball(keys):
 
 
 
-window('Shape Methods & Properties', 300, 310)
+window('Shape Methods & Properties', 320, 320)
 
 user_shapes = []
 image_bindings = []
 
-obj8_0 = static_box((150, 305), 250, 10)
-obj8_0.color = Color("white")
-obj8_0.group = 8
-obj8_0_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj8.png")
-image_bindings.append([obj8_0, obj8_0_image])
-user_shapes.append(obj8_0)
-obj10_1 = cosmetic_ball((150, 150), 150)
-obj10_1.color = Color("white")
-obj10_1.group = 10
-obj10_1_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj10.png")
-image_bindings.append([obj10_1, obj10_1_image])
-user_shapes.append(obj10_1)
-obj5_2 = ball((75, 100), 50)
-obj5_2.color = Color("white")
-obj5_2.group = 5
-obj5_2_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj5.png")
-image_bindings.append([obj5_2, obj5_2_image])
-user_shapes.append(obj5_2)
-obj3_3 = ball((125, 25), 25)
-obj3_3.color = Color("white")
-obj3_3.group = 3
-obj3_3_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj3.png")
-image_bindings.append([obj3_3, obj3_3_image])
-user_shapes.append(obj3_3)
-obj2_4 = ball((75, 25), 25)
-obj2_4.color = Color("white")
-obj2_4.group = 2
-obj2_4_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj2.png")
-image_bindings.append([obj2_4, obj2_4_image])
-user_shapes.append(obj2_4)
-obj1_5 = ball((25, 25), 25)
-obj1_5.color = Color("white")
-obj1_5.group = 1
-obj1_5_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj1.png")
-image_bindings.append([obj1_5, obj1_5_image])
-user_shapes.append(obj1_5)
+obj11_0 = static_box((10, 310), 300, 10)
+obj11_0.color = Color("white")
+obj11_0.group = 11
+obj11_0_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj11.png")
+image_bindings.append([obj11_0, obj11_0_image])
+user_shapes.append(obj11_0)
+obj13_1 = static_box((310, 10), 10, 300)
+obj13_1.color = Color("white")
+obj13_1.group = 13
+obj13_1_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj13.png")
+image_bindings.append([obj13_1, obj13_1_image])
+user_shapes.append(obj13_1)
+obj8_2 = cosmetic_ball((160, 160), 150)
+obj8_2.color = Color("white")
+obj8_2.group = 8
+obj8_2_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj8.png")
+image_bindings.append([obj8_2, obj8_2_image])
+user_shapes.append(obj8_2)
+obj6_3 = ball((160, 185), 50)
+obj6_3.color = Color("white")
+obj6_3.group = 6
+obj6_3_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj6.png")
+image_bindings.append([obj6_3, obj6_3_image])
+user_shapes.append(obj6_3)
+obj3_4 = ball((210, 110), 25)
+obj3_4.color = Color("white")
+obj3_4.group = 3
+obj3_4_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj3.png")
+image_bindings.append([obj3_4, obj3_4_image])
+user_shapes.append(obj3_4)
+obj2_5 = ball((160, 110), 25)
+obj2_5.color = Color("white")
+obj2_5.group = 2
+obj2_5_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj2.png")
+image_bindings.append([obj2_5, obj2_5_image])
+user_shapes.append(obj2_5)
+obj1_6 = ball((110, 110), 25)
+obj1_6.color = Color("white")
+obj1_6.group = 1
+obj1_6_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj1.png")
+image_bindings.append([obj1_6, obj1_6_image])
+user_shapes.append(obj1_6)
+obj13_7 = static_box((0, 10), 10, 300)
+obj13_7.color = Color("white")
+obj13_7.group = 13
+obj13_7_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj13.png")
+image_bindings.append([obj13_7, obj13_7_image])
+user_shapes.append(obj13_7)
+obj11_8 = static_box((10, 0), 300, 10)
+obj11_8.color = Color("white")
+obj11_8.group = 11
+obj11_8_image = pygame.image.load("/Users/thoughtstem/Dev/Python/py-fizzery/obj11.png")
+image_bindings.append([obj11_8, obj11_8_image])
+user_shapes.append(obj11_8)
 
 #floor = static_box((0, 590), 600, 10)
 #floor.elasticity = 0.0
