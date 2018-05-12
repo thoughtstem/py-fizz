@@ -8,6 +8,8 @@
          make-cosmetic
          make-pivot
          connect-pivot
+         motorize
+         gear
          
          box-collider
          circle-collider
@@ -263,7 +265,7 @@
   (physical (next-id)
             (half-width img) (half-height img)
             '()
-            (collider-for img circle-collider)
+            (collider-for img type)
             img
             #t))
 
@@ -306,6 +308,16 @@
                                (id other)))))
 
 
+
+(define/contract (gear f s)
+  (-> physical? physical? physical?)
+  (add-after-compile f
+                     (λ(me py-obj)
+                       (format "gear(obj~a,obj~a)"
+                               (id f)
+                               (id s)))))
+
+
 (define/contract (initial-velocity dir p)
   (-> (listof number?) physical? physical?)
   (add-after-compile p
@@ -314,6 +326,15 @@
                                (id me)
                                (first dir) (second dir)
                                (id me)
+                               ))))
+
+(define/contract (motorize speed p)
+  (-> number? physical? physical?)
+  (add-after-compile p
+                     (λ(me py-obj)
+                       (format "motor(obj~a, ~a)"
+                               (id me)
+                               speed
                                ))))
 
 
@@ -557,7 +578,7 @@ def draw_images(keys):
       angle = s.body.angle
 
     angle_degrees    = math.degrees(angle) 
-    rotated_logo_img = pygame.transform.rotate(image_for(s), angle_degrees)
+    rotated_logo_img = pygame.transform.rotate(image_for(s), -angle_degrees)
     
     offset = Vec2d(rotated_logo_img.get_size()) / 2.
     p      = p - offset
