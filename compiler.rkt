@@ -9,7 +9,10 @@
          make-pivot
          connect-pivot
          motorize
+         pin
          gear
+         gravity
+         spring
          
          box-collider
          circle-collider
@@ -50,7 +53,7 @@
 (struct layout   (id x y w h name preview-f children)           #:transparent)
 (struct physical (id x y after-compile collider image dynamic?) #:transparent)
 (struct cosmetic (id x y after-compile image)                   #:transparent)
-
+  
 (define (is-cosmetic? phys)
   (cosmetic? phys))
 
@@ -318,6 +321,19 @@
                                (id s)))))
 
 
+(define/contract (pin f s)
+  (-> physical? physical? physical?)
+  (add-after-compile f
+                     (λ(me py-obj)
+                       (format "pin(obj~a.body.position,obj~a,obj~a.body.position,obj~a)\nconnected_shapes.append([obj~a, obj~a])"
+                               (id f)
+                               (id f)
+                               (id s)
+                               (id s)
+                               (id f)
+                               (id s)))))
+
+
 (define/contract (initial-velocity dir p)
   (-> (listof number?) physical? physical?)
   (add-after-compile p
@@ -336,6 +352,31 @@
                                (id me)
                                speed
                                ))))
+
+;I don't love that dist is a param.  Better to set based on initial object positions
+(define/contract (spring f s dist) 
+  (-> physical? physical? number? physical?)
+  (add-after-compile f
+                     (λ(me py-obj)
+                       (format "spring(obj~a.body.position, obj~a, obj~a.body.position, obj~a, ~a, 20000, 1000)\nconnected_shapes.append([obj~a, obj~a])"
+                               (id f)
+                               (id f)
+                               (id s)
+                               (id s)
+                               dist
+                               (id f)
+                               (id s)))))
+
+
+
+
+(define/contract (gravity dir p)
+  (-> (list/c number? number?) physical? physical?)
+  (add-after-compile p
+                     (λ(me py-obj)
+                       (format "obj~a.gravity = (~a,~a)"
+                               (id me)
+                               (first dir) (second dir)))))
 
 
 
@@ -545,6 +586,7 @@ window('Shape Methods & Properties', ~a, ~a)
 user_shapes = []
 image_bindings = []
 pivots = []
+connected_shapes = []
 
 ~a
 
@@ -562,29 +604,34 @@ def image_for(s):
       return b[1]
   return False
 
-def draw_images(keys):
-  global user_shapes
-  for s in user_shapes:
-    if(not image_for(s)):
-      continue
+def draw_images(cosmetic):
+  def f(keys):
+    global user_shapes
+    for s in user_shapes:
+      if(not image_for(s)):
+        continue
 
-    if(s.body):
-      p = Vec2d(s.body.position.x, s.body.position.y)
-    else:
-      p = Vec2d(s._x, s._y)
+      if(not (s._cosmetic == cosmetic)):
+        continue
 
-    angle = 0
-    if(s.body):
-      angle = s.body.angle
+      if(s.body):
+        p = Vec2d(s.body.position.x, s.body.position.y)
+      else:
+        p = Vec2d(s._x, s._y)
 
-    angle_degrees    = math.degrees(angle) 
-    rotated_logo_img = pygame.transform.rotate(image_for(s), -angle_degrees)
+      angle = 0
+      if(s.body):
+        angle = s.body.angle
+
+      angle_degrees    = math.degrees(angle) 
+      rotated_logo_img = pygame.transform.rotate(image_for(s), -angle_degrees)
     
-    offset = Vec2d(rotated_logo_img.get_size()) / 2.
-    p      = p - offset
-    
-    screen = pygame.display.get_surface()
-    screen.blit(rotated_logo_img, p)
+      offset = Vec2d(rotated_logo_img.get_size()) / 2.
+      p      = p - offset
+     
+      screen = pygame.display.get_surface()
+      screen.blit(rotated_logo_img, p)
+  return f
 
 def draw_pivot_lines(keys):
   global pivots
@@ -599,9 +646,21 @@ def draw_pivot_lines(keys):
 
       #screen.blit(rotated_logo_img, p)
 
+def draw_connection_lines(keys):
+  global pivots
+  for c in connected_shapes:
+    start = c[0].body.position
+    end   = c[1].body.position
+   
+    screen = pygame.display.get_surface()
+    pygame.draw.line(screen, Color(\"black\"), start, end)
 
-add_observer(draw_images)
+ 
+
+add_observer(draw_images(True))
 add_observer(draw_pivot_lines)
+add_observer(draw_connection_lines)
+add_observer(draw_images(False))
 
 run()"
   )
