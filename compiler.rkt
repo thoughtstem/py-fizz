@@ -13,6 +13,7 @@
          gear
          gravity
          spring
+         angle-spring
          
          box-collider
          circle-collider
@@ -29,6 +30,18 @@
          above
          beside
          overlay
+
+         add-after-compile
+         on-collide
+         on-click
+         id
+
+         hidden
+
+         ;Callbacks for collisions...
+         do-many
+         spawn
+         swap-to
 
          preview
          preview2
@@ -72,8 +85,11 @@
       (cosmetic-image x)))
 
 (define/contract (add-after-compile thing f)
-  (-> (or/c physical? cosmetic?) any/c (or/c physical? cosmetic?))
-  (cond [(physical? thing)  (struct-copy physical
+  (-> (or/c physical? cosmetic? layout?) any/c (or/c physical? cosmetic? layout?))
+  (cond [(layout? thing)  (struct-copy layout
+                                       thing
+                                       [children (map (curryr add-after-compile f) (layout-children thing))])]
+        [(physical? thing)  (struct-copy physical
                                          thing
                                          [after-compile (append (physical-after-compile thing) (list f))])]
         [(cosmetic? thing)  (struct-copy cosmetic
@@ -261,16 +277,26 @@
       (box-collider (h:image-width i)
                     (h:image-height i))))
 
-(define/contract (make-dynamic i #:collider (type circle-collider))
-  (->* ((or/c h:image? cosmetic? layout?)) (#:collider any/c) physical?)
+(define/contract (make-dynamic i
+                               #:collider (type circle-collider)
+                               #:mass (mass 10)
+                               )
+  (->* ((or/c h:image? cosmetic? layout?)) (#:collider any/c #:mass number?) physical?)
 
   (define img (preview i))
-  (physical (next-id)
+  (define obj
+    (physical (next-id)
             (half-width img) (half-height img)
             '()
             (collider-for img type)
             img
             #t))
+
+  (add-after-compile obj
+                     (λ(me py-obj)
+                       (format "obj~a.mass = ~a"
+                               (id me)
+                               mass))))
 
 (define/contract (make-static i #:collider (type circle-collider))
   (->* ((or/c h:image? cosmetic? layout?)) (#:collider any/c) physical?)
@@ -367,7 +393,20 @@
                                (id f)
                                (id s)))))
 
-
+(define/contract (angle-spring f s
+                               (angle 0)
+                               (stiffness 0)
+                               (damping 0)
+                               ) 
+  (->* (physical? physical?) (number? number? number?) physical?)
+  (add-after-compile f
+                     (λ(me py-obj)
+                       (format "rotary_spring(obj~a, obj~a, ~a, ~a, ~a)"
+                               (id f)
+                               (id s)
+                               angle
+                               stiffness
+                               damping))))
 
 
 (define/contract (gravity dir p)
@@ -378,6 +417,68 @@
                                (id me)
                                (first dir) (second dir)))))
 
+
+(define/contract (on-collide f s py-code)
+  (-> (or/c physical? layout?) (or/c physical? layout?) string? (or/c physical? layout?))
+  (define collision-f (format "on_collide_~a_~a"
+                              (id f)
+                              (id s)
+                              ))
+  
+  (add-after-compile f
+                     (λ(me py-obj)
+                       (format "def ~a(f,s,p):\n~a\n  return True\nadd_collision(obj~a, obj~a, ~a) if 'obj~a' in vars() else None"
+                               collision-f
+                               py-code
+                               (id me)
+                               (id s)
+                               collision-f
+                               (id me)))))
+
+(define (hidden o)
+  (add-after-compile o
+                     (λ(me py-obj)
+                       (format "deactivate(obj~a) if 'obj~a' in vars() else None" (id me) (id me)))))
+
+(define (spawn o)
+  (if (layout? o)
+      (apply do-many (map spawn (layout-children o)))
+      (format "  obj~a.body.position=p\n  reactivate(obj~a)"
+              (id o) (id o))))
+
+(define (swap-to o)
+  (if (layout? o)
+      (apply do-many (map swap-to (layout-children o)))
+      (string-append
+       (regexp-replace* #rx"OBJ" "  try:\n    OBJ.body.position=(p[0]+OBJ.body.position[0]-w/2, p[1]+OBJ.body.position[1]-h/2)\n"
+                        (format "obj~a" (id o)))
+       (format "    reactivate(obj~a)\n    deactivate(f)\n" (id o))
+       "  except:\n    print('Exception')\n")))
+
+
+
+(define/contract (on-click f py-code)
+  (-> (or/c physical? layout?) string? (or/c physical? layout?))
+
+  
+  (add-after-compile f
+                     (λ(me py-obj)
+                       (define click-f (format "on_click_~a"
+                                               (id me)))
+                       (format "def ~a(keys):\n  global obj~a\n  f = obj~a\n  p=f.body.position\n  if(mouse_clicked() and obj~a.inside(mouse_point())):\n~a\n  return True\nadd_observer(~a)\n"
+                               
+                               click-f
+                               (id me)
+                               (id me)
+                               (id me)
+                               (regexp-replace* #rx"  " py-code "    ") ;OMG this is disgusting.  Use hy please!!!
+                               click-f
+                               ))))
+
+
+
+(define (do-many . things)
+  (string-join things "\n"))
 
 
 
@@ -570,18 +671,9 @@ from pyphysicssandbox import *
 import pygame
 from pymunk import Vec2d
 
-def hit_ball(keys):
-#    if mouse_clicked():
-#        ball1.hit((0, -400000), ball1.position)
-
-    if constants.K_RIGHT in keys:
-        floor.surface_velocity = (100, 0)
-    elif constants.K_LEFT in keys:
-        floor.surface_velocity = (-100, 0)
-
-
-
-window('Shape Methods & Properties', ~a, ~a)
+w=~a
+h=~a
+window('Most Awesome Thing Ever', w, h)
 
 user_shapes = []
 image_bindings = []
@@ -590,12 +682,6 @@ connected_shapes = []
 
 ~a
 
-
-add_observer(hit_ball)
-
-
-def flipy(y):
-    return -y+600
 
 def image_for(s):
   global image_bindings
@@ -612,6 +698,9 @@ def draw_images(cosmetic):
         continue
 
       if(not (s._cosmetic == cosmetic)):
+        continue
+
+      if(not (s.active)):
         continue
 
       if(s.body):
@@ -651,6 +740,9 @@ def draw_connection_lines(keys):
   for c in connected_shapes:
     start = c[0].body.position
     end   = c[1].body.position
+
+    if(not(c[0].active) or not(c[1].active)):
+      continue
    
     screen = pygame.display.get_surface()
     pygame.draw.line(screen, Color(\"black\"), start, end)
@@ -662,6 +754,5 @@ add_observer(draw_pivot_lines)
 add_observer(draw_connection_lines)
 add_observer(draw_images(False))
 
-run()"
-  )
+run()")
 
