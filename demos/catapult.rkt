@@ -21,13 +21,15 @@
 
 (define to-spawn (hidden
                   (fragments
-                   (stick-figure)
-                   16)))
+                   b
+                   4)))
 
 (define to-spawn2 (hidden (bowling-ball)))
 
 (define b-with-behaviour
-  (on-collide b b2 (do-many
+  (on-collide b b2
+              (swap-to to-spawn)
+              #;(do-many
                     (swap-to to-spawn) 
                     #;(spawn to-spawn2))))
 

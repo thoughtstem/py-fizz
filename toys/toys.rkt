@@ -99,7 +99,7 @@
 
 
 
-#;(module+ test
+(module+ test
 
 
   (define (catapult-test)
@@ -110,7 +110,7 @@
 
     (simulate example1))
 
-  (catapult-test)
+  
   
 
   
@@ -133,6 +133,8 @@
                 (preview2 example1)))
 
     (simulate example1))
+
+  
 
 
   (define (pin-test)
@@ -177,7 +179,7 @@
         (conveyor-belt 10 -5)
         )))
 
-      
+    
 
     (displayln (list
                 (preview example1)
@@ -233,7 +235,7 @@
 
 
 
-(define (car)
+(define (car (speed 1))
   (define b1 (ball))
 
   (define b2 (ball))
@@ -252,11 +254,11 @@
 
   (above top
          (v-space 5)
-         (beside (motorize 1 p-b1)
+         (beside (motorize speed p-b1)
                  (h-space 5)
-                 (motorize 1 p-b2)
+                 (motorize speed p-b2)
                  (h-space 5)
-                 (motorize 1 p-b3))))
+                 (motorize speed p-b3))))
 
 
 

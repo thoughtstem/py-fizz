@@ -41,7 +41,7 @@
 
          ;Callbacks for collisions...
          do-many
-         spawn
+        ; spawn
          swap-to
 
          preview
@@ -331,10 +331,10 @@
   (add-after-compile base
                      (λ(me py-obj)
                        (define piv-name (format-s "pivot~a" (id me)))
-                       (py-begin
+                      (py-begin
                         (py-set piv-name
-                               `(pivot (,(pymunk-obj-x py-obj) ,(pymunk-obj-y py-obj)))))
-                       `(pivots.append ,piv-name))))
+                               `(pivot ,(py-tuple (pymunk-obj-x py-obj) (pymunk-obj-y py-obj))))
+                       `(pivots.append ,piv-name)))))
 
 
 (define/contract (connect-pivot p other)
@@ -390,7 +390,7 @@
                      (λ(me py-obj)
                        (define f.body.position (py-dot (obj-name f) 'body 'position))
                        (define s.body.position (py-dot (obj-name s) 'body 'position))
-                       (py-begin `(spring ,f.body.position ,(obj-name f) ,s.body.position ,(obj-name s) 20000 1000)
+                       (py-begin `(spring ,f.body.position ,(obj-name f) ,s.body.position ,(obj-name s) ,dist 20000 1000)
                                  `(connected-shapes.append ,(py-list (obj-name f)
                                                                      (obj-name s)))))))
 
@@ -429,7 +429,7 @@
   
   (add-after-compile f
                      (λ(me py-obj)
-                       (py-begin (py-define (collision-f f s p)
+                       (py-begin (py-define (,collision-f s f p)
                                             py-code)
                                  (py-if `(in ,(symbol->string (obj-name me))
                                              (vars))
@@ -445,14 +445,6 @@
                                     (vars))
                                `(deactivate ,(obj-name me)))))))
 
-(define (spawn o)
-  (define o.body.position (format-s "obj~a.body.position" (id o)))
-  (if (layout? o)
-      (apply do-many (map spawn (layout-children o)))
-      (py-begin (py-set o.body.position 'p)
-                `(reactivate ,(obj-name o)))))
-
-
 
 
 (define (swap-to o)
@@ -461,15 +453,20 @@
       (apply do-many (map swap-to (layout-children o)))
       (py-begin
        `(try
-         ,(py-set o.body.position
-                  (py-tuple (py-add (py-dot 'p (py-list 0))
-                                    (py-dot o.body.position (py-list 0))
-                                    '(* -1 (/ w 2)))
-                            (py-add (py-dot 'p (py-list 1))
-                                    (py-dot o.body.position (py-list 1))
-                                   '(* -1 (/ h 2)))))
-         (except ,(py-list)
-                 (print "Exception"))))))
+         (do
+             ,(py-set o.body.position
+                      (py-tuple (py-add (py-dot 'p (py-list 0))
+                                        (py-dot o.body.position (py-list 0))
+                                        '(* -1 (/ w 2)))
+                                (py-add (py-dot 'p (py-list 1))
+                                        (py-dot o.body.position (py-list 1))
+                                        '(* -1 (/ h 2)))))
+
+           (deactivate f)
+           (reactivate ,(obj-name o))
+           )
+         (except ,(py-list 'e)
+                 (print e))))))
 
 
 
@@ -487,7 +484,8 @@
                                             (py-set 'f (obj-name me))
                                             (py-set 'p 'f.body.position)
                                             (py-if (py-and '(mouse-clicked)
-                                                           `(,me.inside (mouse-point)))
+                                                           `(,me.inside (mouse-point))
+                                                           (py-dot (obj-name me) 'active))
                                                    (py-begin
                                                     py-code
                                                     (py-return #t))))

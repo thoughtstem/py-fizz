@@ -18,8 +18,8 @@
 
 (define (breakable-balloon)
   (define b (balloon))
-  (define b2 (fragments b 4)
-    #;(hidden (fragments b 4)))
+  (define b2 
+    (hidden (fragments b 4)))
 
   (define b-with-behaviour
     (on-click b (do-many
@@ -41,15 +41,9 @@
             (breakable-balloon)
             (breakable-balloon)
             (breakable-balloon))
-           (car))
+           (beside (car 5)
+                   (h-space 200)))
           temp))))
 
 
 
-#|
-(simulate
- (wooden-level
-  (above (ball)
-         (ball))))
-
-|#
