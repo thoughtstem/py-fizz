@@ -301,7 +301,8 @@
 
   (add-after-compile obj
                      (λ(me py-obj)
-                       (py-set `(hy-DOT ,(obj-name me) mass) mass)
+                       (py-begin
+                        (py-set `(hy-DOT ,(obj-name me) mass) mass))
                        #;(compile-py (py-set `(hy-DOT ,(obj-name me) mass) mass)) ;(id me) "obj~a.mass = ~a"
                                
                                )))
@@ -330,8 +331,9 @@
   (add-after-compile base
                      (λ(me py-obj)
                        (define piv-name (format-s "pivot~a" (id me)))
-                       (py-set piv-name
-                               `(pivot (,(pymunk-obj-x py-obj) ,(pymunk-obj-y py-obj))))
+                       (py-begin
+                        (py-set piv-name
+                               `(pivot (,(pymunk-obj-x py-obj) ,(pymunk-obj-y py-obj)))))
                        `(pivots.append ,piv-name))))
 
 
@@ -340,7 +342,7 @@
   (add-after-compile p
                      (λ(me py-obj)
                        (define piv-connect (format-s "pivot~a.connect" (id me)))
-                       `(,piv-connect ,(obj-name other)))))
+                       (py-begin `(,piv-connect ,(obj-name other))))))
 
 
 
@@ -348,7 +350,8 @@
   (-> physical? physical? physical?)
   (add-after-compile f
                      (λ(me py-obj)
-                       `(gear ,(obj-name f) ,(obj-name s)))))
+                       (py-begin
+                        `(gear ,(obj-name f) ,(obj-name s))))))
 
 
 (define/contract (pin f s)
@@ -357,7 +360,7 @@
                      (λ(me py-obj)
                        (define f.body.position (format-s "obj~a.body.position" (id f)))
                        (define s.body.position (format-s "obj~a.body.position" (id s)))
-                       (py-begin `(pin f.body.position ,(obj-name f) s.body.position ,(obj-name s))
+                       (py-begin `(pin ,f.body.position ,(obj-name f) ,s.body.position ,(obj-name s))
                                  `(connected_shapes.append ,(py-list (obj-name f)
                                                                      (obj-name s)))))))
 
@@ -368,8 +371,9 @@
                      (λ(me py-obj)
                        (define me.hit      (format-s "obj~a.hit" (id me)))
                        (define me.position (format-s "obj~a.position" (id me)))
-                       `(,me.hit ,(py-list (first dir) (second dir))
-                                 ,me.position))))
+                       (py-begin
+                        `(,me.hit ,(py-list (first dir) (second dir))
+                                 ,me.position)))))
 
 
 (define/contract (motorize speed p)
@@ -398,11 +402,12 @@
   (->* (physical? physical?) (number? number? number?) physical?)
   (add-after-compile f
                      (λ(me py-obj)
-                       `(rotary_spring ,(obj-name f)
+                       (py-begin
+                        `(rotary_spring ,(obj-name f)
                                        ,(obj-name s)
                                        ,angle
                                        ,stiffness
-                                       ,damping))))
+                                       ,damping)))))
 
 
 (define/contract (gravity dir p)
@@ -411,8 +416,9 @@
                      (λ(me py-obj)
                        (define me.gravity (format-s "obj~a.gravity" (id me)))
                        
-                       (py-set me.gravity (py-list (first dir)
-                                                   (second dir))))))
+                       (py-begin
+                        (py-set me.gravity (py-tuple (first dir)
+                                                     (second dir)))))))
 
 
 (define/contract (on-collide f s py-code)
@@ -434,9 +440,10 @@
 (define (hidden o)
   (add-after-compile o
                      (λ(me py-obj)
-                       `(py-if `(in ,(symbol->string (obj-name me))
+                       (py-begin
+                        (py-if `(in ,(symbol->string (obj-name me))
                                     (vars))
-                               (deactivate ,(obj-name me))))))
+                               `(deactivate ,(obj-name me)))))))
 
 (define (spawn o)
   (define o.body.position (format-s "obj~a.body.position" (id o)))
@@ -452,16 +459,17 @@
   (define o.body.position (format-s "obj~a.body.position" (id o)))
   (if (layout? o)
       (apply do-many (map swap-to (layout-children o)))
-      `(try
-        ,(py-set o.body.position
-                 (py-list (py-add (py-dot 'p (py-list 0))
-                                  (py-dot o.body.position (py-list 0))
-                                  '(* -1 (/ w 2)))
-                          (py-add (py-dot 'p (py-list 1))
-                                  (py-dot o.body.position (py-list 1))
-                                  '(* -1 (/ h 2)))))
-        (except ,(py-list)
-                (print "Exception")))))
+      (py-begin
+       `(try
+         ,(py-set o.body.position
+                  (py-tuple (py-add (py-dot 'p (py-list 0))
+                                    (py-dot o.body.position (py-list 0))
+                                    '(* -1 (/ w 2)))
+                            (py-add (py-dot 'p (py-list 1))
+                                    (py-dot o.body.position (py-list 1))
+                                   '(* -1 (/ h 2)))))
+         (except ,(py-list)
+                 (print "Exception"))))))
 
 
 
@@ -474,7 +482,7 @@
                        (define click-f (format-s "on_click_~a"
                                                  (id me)))
                        (define me.inside (format-s "obj~a.inside" (id me)))
-                       (py-begin (py-define (click-f keys)
+                       (py-begin (py-define (,click-f keys)
                                             `(global ,(obj-name me))
                                             (py-set 'f (obj-name me))
                                             (py-set 'p 'f.body.position)
@@ -488,7 +496,7 @@
 
 
 (define (do-many . things)
-  (py-begin things))
+  `(do ,@things))
 
 
 
@@ -567,13 +575,15 @@
   (define first-line
     (if (box-collider? collider)
         (py-set name
-                `(,fun-name (int ,(- (pymunk-obj-x x) (half w)))
-                            (int ,(- (pymunk-obj-y x) (half h)))
+                `(,fun-name ,(py-list
+                              `(int (- ,(pymunk-obj-x x) ,(half w)))
+                              `(int (- ,(pymunk-obj-y x) ,(half h))))
                             ,w
                             ,h))
         (py-set name
-                `(,fun-name (int ,(pymunk-obj-x x))
-                            (int ,(pymunk-obj-y x))
+                `(,fun-name ,(py-list
+                              `(int ,(pymunk-obj-x x))
+                              `(int ,(pymunk-obj-y x)))
                             ,(/ (max w h) 2)))))
 
   (define second-line
@@ -612,8 +622,10 @@
 
   (define pre (preview thing))
   
-  (compile (append (map-with-i obj->python objs)
-                   (map-with-i obj->after-compiles objs))
+  (compile (apply append-py*
+                  (append (map-with-i obj->python objs)
+                          (filter (not/c empty?)
+                                  (map-with-i obj->after-compiles objs))))
            "demo.py"
            (h:image-width pre)
            (h:image-height pre)))
@@ -652,28 +664,27 @@
 
 
 (define imports
-  (list '(import math)
-        '(import pymunk)
-        '(import [hy-SQUARE pyphysicssandbox [hy-SQUARE *]])
-        '(import pygame)
-        '(import [hy-SQUARE pyphysicssandbox [hy-SQUARE Vec2d]])))
+  (py-begin '(import math)
+            '(import pymunk)
+            '(import [hy-SQUARE pyphysicssandbox [hy-SQUARE *]])
+            '(import pygame)
+            '(import [hy-SQUARE pyphysicssandbox [hy-SQUARE Vec2d]])))
 
 
 
 (define (setup-code w h)
-  (list (py-set 'w w)
+  (py-begin (py-set 'w w)
         (py-set 'h h)
         (py-set 'user_shapes '[hy-SQUARE])
         (py-set 'image_bindings '[hy-SQUARE])
         (py-set 'pivots '[hy-SQUARE])
         (py-set 'connected_shapes '[hy-SQUARE])
-        `(window "Most Awesome Thing Ever" ,w ,h))
-  )
+        `(window "Most Awesome Thing Ever" ,w ,h)))
 
 
 (define (boiler w h user-hy-codes)
   (define full-hy
-    (append
+    (append-py*
      imports
      (setup-code w h)
 
@@ -682,93 +693,95 @@
 
      ;Python crap below
 
-     ;image-for
-     (py-define (image-for s)
-                (py-global 'image-bindings)
-                (py-for-in (b 'image-bindings)
-                           (py-if (py-eq (py-dot b (py-list 0))
-                                         s)
-                                  (py-return (py-dot b (py-list 1)))))
-                (py-return #f))
+    
+     (py-begin
+      ;image-for
+      (py-define (image-for s)
+                 (py-global 'image-bindings)
+                 (py-for-in (b 'image-bindings)
+                            (py-if (py-eq (py-dot b (py-list 0))
+                                          s)
+                                   (py-return (py-dot b (py-list 1)))))
+                 (py-return #f))
 
-     ;draw-images
-     (py-define (draw_images cosmetic)
-                (py-define (f keys)
-                           (py-global 'user-shapes)
-                           (py-for-in (s 'user-shapes)
-                                      (py-if (py-not '(image-for s)) ;Have to literalize image-for, but would be cool if we could build up a better scoping...
-                                             py-continue)          ;Pass in context?
-
-
-                                      (py-if (py-not (py-eq cosmetic (py-dot s '_cosmetic)))
-                                             py-continue)
-
-                                      (py-if (py-not (py-dot s 'active))
-                                             py-continue)
+      ;draw-images
+      (py-define (draw-images cosmetic)
+                 (py-define (f keys)
+                            (py-global 'user-shapes)
+                            (py-for-in (s 'user-shapes)
+                                       (py-if (py-not '(image-for s)) ;Have to literalize image-for, but would be cool if we could build up a better scoping...
+                                              py-continue)          ;Pass in context?
 
 
-                                      (py-if (py-dot s 'body)
-                                             (py-set 'p `(Vec2d ,(py-dot s 'body 'position 'x)
-                                                                ,(py-dot s 'body 'position 'y)))
-                                             (py-set 'p `(Vec2d ,(py-dot s '_x)
-                                                                ,(py-dot s '_y))))
+                                       (py-if (py-not (py-eq cosmetic (py-dot s '_cosmetic)))
+                                              py-continue)
+
+                                       (py-if (py-not (py-dot s 'active))
+                                              py-continue)
 
 
-                                      (py-set 'angle 0)
-
-                                      (py-if (py-dot s 'body)
-                                             (py-set 'angle (py-dot s 'body 'angle)))
-
-
-                                      (py-set 'angle_degrees `(math.degrees angle))
+                                       (py-if (py-dot s 'body)
+                                              (py-set 'p `(Vec2d ,(py-dot s 'body 'position 'x)
+                                                                 ,(py-dot s 'body 'position 'y)))
+                                              (py-set 'p `(Vec2d ,(py-dot s '_x)
+                                                                 ,(py-dot s '_y))))
 
 
-                                      (py-set 'rotated_logo_img `(pygame.transform.rotate (image-for s) (* -1 angle-degrees)))
+                                       (py-set 'angle 0)
 
-                                      (py-set 'offset (py-div '(Vec2d (rotated_logo_img.get_size)) 2))
+                                       (py-if (py-dot s 'body)
+                                              (py-set 'angle (py-dot s 'body 'angle)))
 
-                                      (py-set 'p (py-sub 'p 'offset))
 
-                                      (py-set 'screen '(pygame.display.get-surface))
+                                       (py-set 'angle_degrees `(math.degrees angle))
 
-                                      '(screen.blit rotated_logo_img p)))
-                (py-return 'f))
 
-     ;draw-pivot-lines
-     (py-define (draw_pivot_lines keys)
-                (py-global 'pivots)
-                (py-for-in (p 'pivots)
-                           (py-set 'start (py-dot p 'body 'position))
-                           (py-for-in (j (py-dot p 'shape))
-                                      (py-set 'other (py-dot j 'a))
-                                      (py-set 'end   (py-dot 'other 'position))
-                                      (py-set 'screen '(pygame.display.get_surface))
-                                      '(pygame.draw.line screen (Color "black") start end)
+                                       (py-set 'rotated_logo_img `(pygame.transform.rotate (image-for s) (* -1 angle-degrees)))
+
+                                       (py-set 'offset (py-div '(Vec2d (rotated_logo_img.get_size)) 2))
+
+                                       (py-set 'p (py-sub 'p 'offset))
+
+                                       (py-set 'screen '(pygame.display.get-surface))
+
+                                       '(screen.blit rotated_logo_img p)))
+                 (py-return 'f))
+
+      ;draw-pivot-lines
+      (py-define (draw_pivot_lines keys)
+                 (py-global 'pivots)
+                 (py-for-in (p 'pivots)
+                            (py-set 'start (py-dot p 'body 'position))
+                            (py-for-in (j (py-dot p 'shape))
+                                       (py-set 'other (py-dot j 'a))
+                                       (py-set 'end   (py-dot 'other 'position))
+                                       (py-set 'screen '(pygame.display.get_surface))
+                                       '(pygame.draw.line screen (Color "black") start end)
                           
-                                      )
-                           ))
+                                       )
+                            ))
 
-     ;draw-connection-lines
-     (py-define (draw_connection_lines keys)
-                (py-global 'pivots)
-                (py-for-in (c 'connected_shapes)
-                           (py-set 'start (py-dot c (py-list 0) 'body 'position))
-                           (py-set 'end   (py-dot c (py-list 1) 'body 'position))
+      ;draw-connection-lines
+      (py-define (draw_connection_lines keys)
+                 (py-global 'pivots)
+                 (py-for-in (c 'connected_shapes)
+                            (py-set 'start (py-dot c (py-list 0) 'body 'position))
+                            (py-set 'end   (py-dot c (py-list 1) 'body 'position))
 
-                           (py-if (py-or (py-not (py-dot c (py-list 0) 'active))
-                                         (py-not (py-dot c (py-list 0) 'active)))
-                                  py-continue)
+                            (py-if (py-or (py-not (py-dot c (py-list 0) 'active))
+                                          (py-not (py-dot c (py-list 0) 'active)))
+                                   py-continue)
 
-                           (py-set 'screen '(pygame.display.get_surface))
-                           '(pygame.draw.line screen (Color "black") start end)
-                           ))
+                            (py-set 'screen '(pygame.display.get_surface))
+                            '(pygame.draw.line screen (Color "black") start end)
+                            ))
 
     
-     '(add-observer (draw-images #t))
-     '(add-observer draw_pivot_lines)
-     '(add-observer draw_connection_lines)
-     '(add-observer (draw-images #f))
-     '(run)))
+      '(add-observer (draw-images #t))
+      '(add-observer draw_pivot_lines)
+      '(add-observer draw_connection_lines)
+      '(add-observer (draw-images #f))
+      '(run))))
 
   (pretty-print full-hy)
   
