@@ -13,11 +13,12 @@
 ;  It's disgusting that you have to overlay the hidden object and activate it...
 ;    Better to just spawn a new one...
 
+#|
 (define temp '())
 
 (define (breakable-balloon)
   (define b (balloon))
-  (define b2 (hidden (fragments b 4)))
+  (define b2 (balloon) #;(hidden (fragments b 4)))
 
   (define b-with-behaviour
     (on-click b (do-many
@@ -43,5 +44,10 @@
           temp))))
 
 
+|#
 
- 
+
+(simulate
+ (wooden-level
+  (above (ball)
+         (ball))))

@@ -1,1 +1,1 @@
-(defn test2 [] (do 6)) (defn test [] (do 4))
+(import math) (import pymunk) (import [pyphysicssandbox [*]]) (import pygame) (import [pyphysicssandbox [Vec2d]])
