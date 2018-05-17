@@ -13,8 +13,7 @@
 (define c2 (hidden (car)))
 
 (define c-with-behaviour
-  (on-collide c b (do-many
-                    (swap-to c2))))
+  (on-collide c b (swap-to c2)))
 
 (simulate
  (wooden-level
