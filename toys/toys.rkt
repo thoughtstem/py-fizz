@@ -5,6 +5,7 @@
          catapult
          car
          balloon
+         breakable-balloon
          ball
          block
          balloons-pulling
@@ -22,6 +23,7 @@
 
          fragments
          stick-figure
+         gun
          )
 
 (require "../compiler.rkt")
@@ -36,18 +38,20 @@
    (h:bitmap "./imgs/stick-figure.png")))
 
 
-(define (fragments thing res)
+(define (fragments thing res (energy 100000))
   (define i (preview thing))
   
 
   (define (fragment x y d)
-    (boxify 
-     (h:crop (* x (/ (h:image-width i) d))
-             (* y (/ (h:image-height i) d))
+    (initial-velocity (list (- (* energy (random)) (/ energy 2))
+                            (- (* energy (random)) (/ energy 2)))
+     (boxify 
+      (h:crop (* x (/ (h:image-width i) d))
+              (* y (/ (h:image-height i) d))
                            
-             (/ (h:image-width i) d)
-             (/ (h:image-height i) d)
-             i)))
+              (/ (h:image-width i) d)
+              (/ (h:image-height i) d)
+              i))))
 
   (define cols
     (for/list ([x (range res)])
@@ -55,6 +59,28 @@
                      (fragment x y res)))))
   
   (apply beside cols))
+
+
+(define (gun (projectile (ball)))
+  (define icon (h:scale 0.25 (preview projectile)))
+  (define img (h:above
+               icon
+               (h:bitmap "./imgs/cannon.png")))
+  
+  (define base
+    (make-static #:collider box-collider
+                 img))
+  
+  (define bullet
+    (initial-velocity '(1000000 -1000000) projectile))
+
+  (define bullet-with-offset
+    (above
+     (beside (h-space (h:image-width img)) bullet)
+     (v-space 100)))
+
+  (on-click base
+            (spawn bullet-with-offset #f)))
 
 
 (define (pipe w h)
@@ -201,6 +227,17 @@
                                (make-dynamic #:collider box-collider
                                    (h:bitmap "./imgs/balloon.png")))))
 
+(define (breakable-balloon)
+  (define b (balloon))
+  (define b2 (fragments (balloon) 4))
+
+  (define b-with-behaviour
+    (on-collide #:energy-loss 50000000
+                (on-click b
+                          (spawn b2))
+                (spawn b2)))
+
+  b-with-behaviour)
 
 (define (balloon-pulling obj rope-dist)
   (define b (balloon))
@@ -213,7 +250,7 @@
 
 
 (define (balloons-pulling n obj rope-dist)
-  (define bs (map (thunk* (balloon)) (range n)))
+  (define bs (map (thunk* (breakable-balloon) #;(balloon)) (range n)))
 
   (define p-obj (foldl (λ(n res)
                          (spring res n rope-dist))
