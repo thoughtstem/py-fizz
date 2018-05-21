@@ -1,48 +1,27 @@
-#lang racket-bricks
+#lang racket
 
-(require "../compiler.rkt")
-(require "../toys/toys.rkt")
-(require (prefix-in h: 2htdp/image))
+(require py-fizz)
 
-;TODO:
-;  Be able to spawn/swap-to composite objects
-;    Do this first.  Needed for cool stuff below (e.g. spawn sparks, blood, etc)
-;  Do a demo with something meaningful to swap to:
-;    Boxing glove from incredible machine
-;    Moving car from not moving car
+;(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
 
-
-;NOTES:
-;  Can't collide with composite objects -- pinned-motor e.g.
 
 
 (define b (stick-figure))
-(define b2 (gravity '(0 0) (ball)))
+(define b2 (gravity '(0 0) (wheel)))
 
-(define to-spawn (hidden
-                  (fragments
+(define to-spawn (fragments
                    b
-                   4)))
-
-(define to-spawn2 (hidden (bowling-ball)))
+                   4))
 
 (define b-with-behaviour
-  (on-collide b b2
-              (swap-to to-spawn)
-              #;(do-many
-                    (swap-to to-spawn) 
-                    #;(spawn to-spawn2))))
+  (on-collide b 
+              (spawn to-spawn #t)))
 
 (simulate
  (wooden-level
-  (overlay
-   to-spawn
-   (catapult
+  (catapult
     (above
-     b2
-     (v-space 50)
-     b-with-behaviour)))))
-
-
-
- 
+     
+     (balloons-pulling 3 b-with-behaviour)
+     (v-space 100)
+     b2))))

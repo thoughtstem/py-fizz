@@ -1,8 +1,9 @@
-#lang racket-bricks
+#lang racket
 
-(require "../compiler.rkt")
-(require "../toys/toys.rkt")
-(require (prefix-in h: 2htdp/image))
+(require py-fizz)
+
+;(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
+ 
 
 
 (define c
@@ -15,9 +16,15 @@
   (above
    c
    (v-space 50)
-   (beside (cannon (cannon (cannon (breakable-balloon))))
+   (beside (cannon 
+            (cannon 
+             (cannon 
+              (breakable-balloon)
+              1000 120)
+             0 120)
+            0 120)
            (h-space 100)
-           (cannon (bowling-ball))))))
+           (cannon (bowling-ball) 10000 45)))))
 
 
 

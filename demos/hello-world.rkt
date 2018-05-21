@@ -1,6 +1,9 @@
-#lang racket-bricks
+#lang racket
 
-(require py-fizz/py-fizz) 
+(require py-fizz) 
+ 
+;Just for testing on Stephen's computer.  Remove before deploying...
+(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
  
 (define ball
   (make-dynamic
@@ -8,17 +11,17 @@
 
 (define floor
   (make-static #:collider box-collider
-   (rectangle 200 10 "solid" "black")))
+               (rectangle 200 10 "solid" "black")))
 
-(simulate
- ball)
+#;(simulate
+   ball)
 
 #;(simulate
  (above
   ball
   (v-space 100)))
 
-#;(simulate
+(simulate
  (above
   (beside (h-space 50) ball (h-space 50))
   (v-space 100)

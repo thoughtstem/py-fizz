@@ -1,13 +1,9 @@
-#lang racket-bricks
+#lang racket
 
-(require "../compiler.rkt")
-(require "../toys/toys.rkt")
-(require (prefix-in h: 2htdp/image))
+(require py-fizz)
 
-;TODOs: Support recursive builders?
-;  Support builders in all directions
-;  Can we have a builder that lets you start building out in a tree-like way?
-;  Make recursion part of the curriculum....
+;(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
+ 
 
 (define thing
   (make-static (pipe 20 20)))
@@ -36,7 +32,6 @@
                         end
                         (overlay another
                                  (my-builder x y (- n 1) another end))))))
-
 
 (simulate
  (wooden-level

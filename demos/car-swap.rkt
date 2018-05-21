@@ -1,13 +1,13 @@
-#lang racket-bricks
+#lang racket
 
-(require "../compiler.rkt")
-(require "../toys/toys.rkt")
-(require (prefix-in h: 2htdp/image))
+(require py-fizz)
+
+;(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
 
 
 (define c
   (balloons-pulling 5
-                    (bowling-ball);(motorize 5 (block))
+                    (bowling-ball)
                     100))
 
 (define (m) (pinned-motor "orange" 100))
@@ -16,13 +16,10 @@
  (wooden-level
   
   (above
-   (block)
+   (crate)
    (beside
      (m)
      (m)
      (m))
    (v-space 30)
-   c
-   ;(v-space 50)
-   ;(beside (gun) (h-space 300))
-   )))
+   c)))

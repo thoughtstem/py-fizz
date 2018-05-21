@@ -1,8 +1,9 @@
-#lang racket-bricks
+#lang racket
 
-(require "../compiler.rkt")
-(require "../toys/toys.rkt")
-(require (prefix-in h: 2htdp/image))
+(require py-fizz)
+
+;(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
+ 
 
 
 (define c
@@ -16,7 +17,7 @@
  (wooden-level
   
   (above
-   (block)
+   (crate)
    (beside (m) (m) (m))
    (v-space 30)
    c)))

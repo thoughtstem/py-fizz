@@ -1,6 +1,6 @@
-#lang racket-bricks
+#lang racket
 
-(require "../py-fizz.rkt")
+(require py-fizz) 
 
 
 ;(simulate #|a|# (wooden-level #|with a|# (cannon #|that shoots out a|# (car))))
