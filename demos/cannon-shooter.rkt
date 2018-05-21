@@ -15,7 +15,9 @@
   (above
    c
    (v-space 50)
-   (beside (gun (balloon))
-           (h-space 20)
-           (gun (bowling-ball))
-           (h-space 200)))))
+   (beside (cannon (cannon (cannon (breakable-balloon))))
+           (h-space 100)
+           (cannon (bowling-ball))))))
+
+
+

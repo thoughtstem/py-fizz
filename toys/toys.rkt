@@ -6,8 +6,8 @@
          car
          balloon
          breakable-balloon
-         ball
-         block
+         wheel
+         crate
          balloons-pulling
          balloon-pulling
          conveyor-belt
@@ -23,7 +23,9 @@
 
          fragments
          stick-figure
-         gun
+         cannon
+
+         builder
          )
 
 (require "../compiler.rkt")
@@ -38,56 +40,114 @@
    (h:bitmap "./imgs/stick-figure.png")))
 
 
-(define (fragments thing res (energy 100000))
+(define (fragments thing resolution
+                   (energy 100000)
+                   (ttl 10))
   (define i (preview thing))
   
 
   (define (fragment x y d)
     (initial-velocity (list (- (* energy (random)) (/ energy 2))
-                            (- (* energy (random)) (/ energy 2)))
-     (boxify 
-      (h:crop (* x (/ (h:image-width i) d))
-              (* y (/ (h:image-height i) d))
+                                          (- (* energy (random)) (/ energy 2)))
+                                    (boxify 
+                                     (h:crop (* x (/ (h:image-width i) d))
+                                             (* y (/ (h:image-height i) d))
                            
-              (/ (h:image-width i) d)
-              (/ (h:image-height i) d)
-              i))))
+                                             (/ (h:image-width i) d)
+                                             (/ (h:image-height i) d)
+                                             i))))
 
   (define cols
-    (for/list ([x (range res)])
-      (apply above (for/list ([y (range res)])
-                     (fragment x y res)))))
+    (for/list ([x (range resolution)])
+      (apply above (for/list ([y (range resolution)])
+                     (fragment x y resolution)))))
   
   (apply beside cols))
 
 
-(define (gun (projectile (ball)))
-  (define icon (h:scale 0.25 (preview projectile)))
+(define (builder (to-build (make-static (pipe 20 20)))
+                 #:up-down (up-down 0)
+                 #:left-right (left-right 0))
+
+  (define chest (h:scale 0.25 (h:bitmap "./imgs/chest.png")))
+
+  (define icon (h:scale 0.2
+                         (preview to-build)))
+  
   (define img (h:above
                icon
-               (h:bitmap "./imgs/cannon.png")))
-  
+               chest))
+
   (define base
     (make-static #:collider box-collider
                  img))
-  
-  (define bullet
-    (initial-velocity '(1000000 -1000000) projectile))
 
-  (define bullet-with-offset
-    (above
-     (beside (h-space (h:image-width img)) bullet)
-     (v-space 100)))
+  (define thing-with-offset
+    (offset-xy (* left-right 2 (h:image-width  (preview to-build)))
+               (* up-down    2 (h:image-height (preview to-build)))
+               to-build))
 
   (on-click base
+            (spawn thing-with-offset #t)))
+
+(define (offset-xy left-right up-down thing)
+  (offset beside left-right
+               (offset above up-down thing)))
+
+(define (offset f adj thing)
+  (define space ((if (eq? f above)
+                     v-space
+                     h-space) (abs adj)))
+
+  (cond [(= 0 adj) thing]
+        [(positive? adj) (f space thing)]
+        [(negative? adj) (f thing space)]))
+
+
+
+(define (cannon (projectile (wheel))
+                (e 10000)
+                (angle 0))
+  
+  (define icon (h:scale 0.25 (preview projectile)))
+  (define img (h:overlay
+                icon
+                (h:bitmap "./imgs/wheel.png")
+                (h:rotate (- angle)
+                          (preview (pipe 100 45)))))
+  
+  (define stem
+    (motorize 0
+              (make-static #:collider box-collider
+                 img)))
+
+  (define r
+    (+ 100 (h:image-width img)))
+
+  (define (rads a)
+    (* a 0.017))
+
+  (define x (- (* r (cos (rads angle)))))
+  (define y (- (* r (sin (rads angle)))))
+
+  
+  (define bullet
+    (shape-map (λ(c)
+                 (initial-velocity (list (* x e)
+                                         (* y e)) c))
+               projectile)
+    #;(if (not (layout? projectile))
+        (initial-velocity (list (* x e)
+                                (* y e)) projectile)
+        projectile))
+
+  (define bullet-with-offset
+    (offset-xy x y bullet))
+
+
+  (on-click stem
             (spawn bullet-with-offset #f)))
 
-
-(define (pipe w h)
-  (define texture (scale-to w h (h:bitmap "./imgs/brushed-metal.png")))
-  (define main (h:rectangle w h "solid" "black"))
-  (make-dynamic #:collider box-collider
-                (stroke (h:place-image texture (/ w 2) (/ h 2) main))))
 
 
 (define (catapult launch)
@@ -132,7 +192,7 @@
 
     (define example1
       (wooden-level
-       (catapult (ball))))
+       (catapult (wheel))))
 
     (simulate example1))
 
@@ -149,7 +209,7 @@
        (above
         (car)
         (v-space 20)
-        (balloons-pulling 4 (motorize 0 (block)) 100))
+        (balloons-pulling 4 (motorize 0 (crate)) 100))
        ))
 
       
@@ -193,11 +253,11 @@
        (above
 
         (beside
-         (block)
-         (block)
-         (block)
-         (block)
-         (block)
+         (crate)
+         (crate)
+         (crate)
+         (crate)
+         (crate)
          (h-space 100))
         (v-space 20)
         (conveyor-belt 8 5)
@@ -223,13 +283,13 @@
 
 ;Correlate strength of balloon and its size
 (define (balloon)
-  (gravity '(0 -100) (motorize 0
-                               (make-dynamic #:collider box-collider
-                                   (h:bitmap "./imgs/balloon.png")))))
+  (gravity '(0 -100)
+           (make-dynamic #:collider box-collider
+                                    (h:bitmap "./imgs/balloon.png"))))
 
 (define (breakable-balloon)
   (define b (balloon))
-  (define b2 (fragments (balloon) 4))
+  (define b2 (fragments (balloon) 4 0.5))
 
   (define b-with-behaviour
     (on-collide #:energy-loss 50000000
@@ -249,7 +309,7 @@
          p-obj))
 
 
-(define (balloons-pulling n obj rope-dist)
+(define (balloons-pulling n obj (rope-dist 100))
   (define bs (map (thunk* (breakable-balloon) #;(balloon)) (range n)))
 
   (define p-obj (foldl (λ(n res)
@@ -272,22 +332,22 @@
 
 
 
-(define (car (speed 1))
-  (define b1 (ball))
+(define (car (speed 1)
+             (top (crate))
+             (connection-point top))
+  (define b1 (elasticity 0 (wheel)))
 
-  (define b2 (ball))
+  (define b2 (elasticity 0 (wheel)))
 
-  (define b3 (ball))
-
-  (define top (motorize 0 (block)))
+  (define b3 (elasticity 0 (wheel)))
 
   (define p-b1 (pin
                 (pin b1 b2)
-                top))
+                connection-point))
 
-  (define p-b2 (pin (pin b2 b3) top))
+  (define p-b2 (pin (pin b2 b3) connection-point))
 
-  (define p-b3 (pin b3 top))
+  (define p-b3 (pin b3 connection-point))
 
   (above top
          (v-space 5)
@@ -296,21 +356,6 @@
                  (motorize speed p-b2)
                  (h-space 5)
                  (motorize speed p-b3))))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -351,11 +396,11 @@
 (define (bowling-ball)
   (make-dynamic #:mass 10000 (h:bitmap "./imgs/bowling-ball.png")))
 
-(define (ball (size 40))
+(define (wheel (size 40))
   (make-dynamic
    (scale-to size size (h:bitmap "./imgs/wheel.png"))))
 
-(define (block (force-dir '(0 0)) (size 40))
+(define (crate (force-dir '(0 0)) (size 40))
   (initial-velocity
    force-dir
    (make-dynamic #:collider box-collider
@@ -370,7 +415,7 @@
 
 (define (pendulum (force-dir '(0 0)))
   (define piv (my-pivot))
-  (define b1 (ball force-dir))
+  (define b1 (wheel force-dir))
 
   (define connected-piv
     (connect-pivot
@@ -387,7 +432,7 @@
 (define (my-motor c (s 10))
   (motorize s (make-dynamic
                     (overlay
-                     (ball 40)
+                     (wheel 40)
                      (circle 20 "solid" c)))))
 
 
@@ -403,11 +448,38 @@
     
   (overlay c-piv m1))
 
+ 
+
 (define (wooden-level i)
+  (define base
+    (h:scale 0.5 (h:bitmap "./imgs/wooden-bg2.jpg")))
+
+  (define texture
+    (h:beside
+     (h:above base base)
+     (h:above base base)))
+  
+  (define spacer
+    (h:rectangle (max 500 (+ 100 (h:image-width (preview i))))
+                 (max 500 (+ 100 (h:image-height (preview i))))
+                 "solid"
+                 "white"))
   (borders
    (overlay
     i
-    (h:bitmap "./imgs/wooden-bg.png"))))
+    (h:place-image texture
+                   (/ (h:image-width spacer) 2)
+                   (/ (h:image-height spacer) 2)
+                   spacer))))
+
+
+(define (pipe w h)
+  (define texture (scale-to w h (h:bitmap "./imgs/brushed-metal.png")))
+  (define main (h:rectangle w h "solid" "black"))
+  (make-dynamic #:collider box-collider
+                (stroke (h:place-image texture (/ w 2) (/ h 2) main))))
+
+
 
 
 ;Can refactor most of these tests. DRY

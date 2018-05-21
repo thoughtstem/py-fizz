@@ -17,6 +17,12 @@
   
   (above
    (block)
-   (beside (m) (m) (m))
+   (beside
+     (m)
+     (m)
+     (m))
    (v-space 30)
-   c)))
+   c
+   ;(v-space 50)
+   ;(beside (gun) (h-space 300))
+   )))

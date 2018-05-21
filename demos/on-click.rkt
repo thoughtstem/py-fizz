@@ -23,7 +23,7 @@
 
   (define b-with-behaviour
     (on-click b
-              (swap-to b2)
+              (spawn b2)
               #;(do-many
                  (swap-to b2))))
 

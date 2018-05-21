@@ -1,2 +1,574 @@
 #lang racket
 
+(provide wooden-level
+         pipe
+         catapult
+         car
+         balloon
+         breakable-balloon
+         wheel
+         crate
+         balloons-pulling
+         balloon-pulling
+         conveyor-belt
+         pendulum
+         my-motor
+         pinned-motor
+         my-pivot
+
+         bowling-ball
+
+         v-space
+         h-space
+
+         fragments
+         stick-figure
+         cannon
+
+         builder
+         )
+
+(require "../compiler.rkt")
+(require (prefix-in h: 2htdp/image))
+
+(define (boxify thing)
+  (make-dynamic #:collider box-collider thing))
+
+
+(define (stick-figure)
+  (make-dynamic #:collider box-collider
+   (h:bitmap "./imgs/stick-figure.png")))
+
+
+(define (fragments thing resolution
+                   (energy 100000)
+                   (ttl 10))
+  (define i (preview thing))
+  
+
+  (define (fragment x y d)
+    (initial-velocity (list (- (* energy (random)) (/ energy 2))
+                                          (- (* energy (random)) (/ energy 2)))
+                                    (boxify 
+                                     (h:crop (* x (/ (h:image-width i) d))
+                                             (* y (/ (h:image-height i) d))
+                           
+                                             (/ (h:image-width i) d)
+                                             (/ (h:image-height i) d)
+                                             i))))
+
+  (define cols
+    (for/list ([x (range resolution)])
+      (apply above (for/list ([y (range resolution)])
+                     (fragment x y resolution)))))
+  
+  (apply beside cols))
+
+
+(define (builder (to-build (make-static (pipe 20 20)))
+                 #:up-down (up-down 0)
+                 #:left-right (left-right 0))
+
+  (define chest (h:scale 0.25 (h:bitmap "./imgs/chest.png")))
+
+  (define icon (h:scale 0.2
+                         (preview to-build)))
+  
+  (define img (h:above
+               icon
+               chest))
+
+
+  
+  (define base
+    (make-static #:collider box-collider
+                 img))
+
+  (define thing-with-offset
+    (offset-xy (* left-right 2 (h:image-width  (preview to-build)))
+               (* up-down    2 (h:image-height (preview to-build)))
+               to-build))
+
+  (on-click base
+            (spawn thing-with-offset #t)))
+
+(define (offset-xy left-right up-down thing)
+  (offset beside left-right
+               (offset above up-down thing)))
+
+(define (offset f adj thing)
+  (define space ((if (eq? f above)
+                     v-space
+                     h-space) (abs adj)))
+
+  (cond [(= 0 adj) thing]
+        [(positive? adj) (f space thing)]
+        [(negative? adj) (f thing space)]))
+
+
+
+(define (cannon (projectile (wheel))
+                (e 10000)
+                (angle 0))
+  
+  (define icon (h:scale 0.25 (preview projectile)))
+  (define img (h:overlay/align "middle" "bottom"
+               icon
+               (h:rotate (- angle)
+                         (h:rectangle 50 25 "solid" "black"))
+               #;(h:bitmap "./imgs/cannon.png")))
+  
+  (define stem
+    (make-static #:collider box-collider
+                 img))
+
+  (define r
+    (+ 100 (h:image-width img)))
+
+  (define (rads a)
+    (* a 0.017))
+
+  (define x (- (* r (cos (rads angle)))))
+  (define y (- (* r (sin (rads angle)))))
+
+  (displayln (list x y))
+  
+  (define bullet
+    (if (not (layout? projectile))
+        (initial-velocity (list (* x e)
+                                (* y e)) projectile)
+        projectile))
+
+  (define bullet-with-offset
+    (offset-xy x y bullet))
+
+
+  (on-click stem
+            (spawn bullet-with-offset #f)))
+
+
+
+(define (catapult launch)
+  (define piv (my-pivot))
+  (define rod (pipe 200 10))
+
+  (define launcher (initial-velocity '(0 1500000) (bowling-ball)))
+
+  (define connected-piv
+    (connect-pivot
+      piv
+      rod))
+
+  (define base (make-static (circle 1 "solid" "black")))
+  
+  (define spring-pivot
+    (angle-spring base
+                  rod
+                  0
+                  100000000))
+
+  (define seesaw
+    (above
+     (overlay connected-piv
+              rod)
+     spring-pivot))
+
+
+  (above (beside launcher (h-space 150))
+         (v-space 50)
+         (beside (h-space 150) launch)
+         seesaw))
+
+
+
+
+
+(module+ test
+
+
+  (define (catapult-test)
+
+    (define example1
+      (wooden-level
+       (catapult (wheel))))
+
+    (simulate example1))
+
+  
+  
+
+  
+
+  (define (balloon-test)
+
+    (define example1
+
+      (wooden-level
+       (above
+        (car)
+        (v-space 20)
+        (balloons-pulling 4 (motorize 0 (crate)) 100))
+       ))
+
+      
+
+    (displayln (list
+                (preview example1)
+                (preview2 example1)))
+
+    (simulate example1))
+
+  
+
+
+  (define (pin-test)
+
+    (define example1
+
+      (wooden-level
+
+       (above (car)
+              (v-space 100)
+              (car) )
+       ))
+
+      
+
+    (displayln (list
+                (preview example1)
+                (preview2 example1)))
+
+    (simulate example1))
+
+
+
+  
+  (define (belt-test)
+
+    (define example1
+
+      (wooden-level
+       (above
+
+        (beside
+         (crate)
+         (crate)
+         (crate)
+         (crate)
+         (crate)
+         (h-space 100))
+        (v-space 20)
+        (conveyor-belt 8 5)
+        (v-space 100)
+        (conveyor-belt 10 -5)
+        )))
+
+    
+
+    (displayln (list
+                (preview example1)
+                (preview2 example1)))
+
+    (simulate example1))
+
+
+  )
+
+
+
+
+
+
+;Correlate strength of balloon and its size
+(define (balloon)
+  (gravity '(0 -100)
+           (make-dynamic #:collider box-collider
+                                    (h:bitmap "./imgs/balloon.png"))))
+
+(define (breakable-balloon)
+  (define b (balloon))
+  (define b2 (fragments (balloon) 4 0.5))
+
+  (define b-with-behaviour
+    (on-collide #:energy-loss 50000000
+                (on-click b
+                          (spawn b2))
+                (spawn b2)))
+
+  b-with-behaviour)
+
+(define (balloon-pulling obj rope-dist)
+  (define b (balloon))
+
+  (define p-obj (spring obj b rope-dist))
+ 
+  (above b
+         (v-space rope-dist)
+         p-obj))
+
+
+(define (balloons-pulling n obj (rope-dist 100))
+  (define bs (map (thunk* (breakable-balloon) #;(balloon)) (range n)))
+
+  (define p-obj (foldl (λ(n res)
+                         (spring res n rope-dist))
+                       obj
+                       bs))
+ 
+  (above (apply beside bs)
+         (v-space rope-dist)
+         p-obj))
+
+
+
+
+(define (conveyor-belt num (s 10))
+  (define num-list (range num))
+  (define pinned-motor-list (map (thunk* (pinned-motor (if (positive? s) "red" "blue") s)) num-list))
+  (apply beside
+   pinned-motor-list))
+
+
+
+(define (car (speed 1)
+             (top (crate))
+             (connection-point top))
+  (define b1 (elasticity 0 (wheel)))
+
+  (define b2 (elasticity 0 (wheel)))
+
+  (define b3 (elasticity 0 (wheel)))
+
+  (define p-b1 (pin
+                (pin b1 b2)
+                connection-point))
+
+  (define p-b2 (pin (pin b2 b3) connection-point))
+
+  (define p-b3 (pin b3 connection-point))
+
+  (above top
+         (v-space 5)
+         (beside (motorize speed p-b1)
+                 (h-space 5)
+                 (motorize speed p-b2)
+                 (h-space 5)
+                 (motorize speed p-b3))))
+
+
+
+
+
+
+
+
+
+(define (scale-to x y i)
+  (h:scale/xy (/ x (h:image-width i)) (/ y (h:image-height i)) i))
+
+(define (borders i)
+  (define h-line (make-static #:collider box-collider
+                              (rectangle (+ 20 (width i)) 10 "solid" "black")))
+  
+  (define v-line (make-static #:collider box-collider
+                              (rectangle 10 (height i) "solid" "black")))
+
+  (above
+   h-line
+   (beside v-line
+           i
+           v-line)
+   h-line))
+
+(define (stroke i)
+  (define w (add1 (h:image-width i)))
+  (define h (add1 (h:image-height i)))
+  (overlay i
+           (rectangle w h "solid" "black")))
+
+(define (my-pivot)
+  (make-pivot
+   (h:bitmap "./imgs/screw.png")))
+
+
+(define (bowling-ball)
+  (make-dynamic #:mass 10000 (h:bitmap "./imgs/bowling-ball.png")))
+
+(define (wheel (size 40))
+  (make-dynamic
+   (scale-to size size (h:bitmap "./imgs/wheel.png"))))
+
+(define (crate (force-dir '(0 0)) (size 40))
+  (initial-velocity
+   force-dir
+   (make-dynamic #:collider box-collider
+   (stroke (scale-to size size (h:bitmap
+                                "./imgs/crate.png") )))))
+
+(define (v-space size)
+  (rectangle 1 size "solid" "transparent"))
+
+(define (h-space size)
+  (rectangle size 1 "solid" "transparent"))
+
+(define (pendulum (force-dir '(0 0)))
+  (define piv (my-pivot))
+  (define b1 (wheel force-dir))
+
+  (define connected-piv
+    (connect-pivot
+     piv
+     b1))
+
+  (above connected-piv
+         (v-space 50)
+         b1))
+
+
+
+
+(define (my-motor c (s 10))
+  (motorize s (make-dynamic
+                    (overlay
+                     (wheel 40)
+                     (circle 20 "solid" c)))))
+
+
+(define (pinned-motor c (s 10))
+  (define piv (my-pivot))
+  (define m1 (my-motor c s))
+
+    
+  (define c-piv
+    (connect-pivot
+     piv
+     m1))
+    
+  (overlay c-piv m1))
+
+ 
+
+(define (wooden-level i)
+  (define base
+    (h:scale 0.5 (h:bitmap "./imgs/wooden-bg2.jpg")))
+
+  (define texture
+    (h:beside
+     (h:above base base)
+     (h:above base base)))
+  
+  (define spacer
+    (h:rectangle (max 500 (+ 100 (h:image-width (preview i))))
+                 (max 500 (+ 100 (h:image-height (preview i))))
+                 "solid"
+                 "white"))
+  (borders
+   (overlay
+    i
+    (h:place-image texture
+                   (/ (h:image-width spacer) 2)
+                   (/ (h:image-height spacer) 2)
+                   spacer))))
+
+
+(define (pipe w h)
+  (define texture (scale-to w h (h:bitmap "./imgs/brushed-metal.png")))
+  (define main (h:rectangle w h "solid" "black"))
+  (make-dynamic #:collider box-collider
+                (stroke (h:place-image texture (/ w 2) (/ h 2) main))))
+
+
+
+
+;Can refactor most of these tests. DRY
+#;(module+ test
+
+
+
+
+
+
+  
+  (define (gear-test)
+
+  
+    (define internal
+      
+      (above
+       (ball)
+       (v-space 20)
+       (pinned-motor "blue")))
+
+    (define example1
+      (wooden-level internal))
+
+    (simulate example1))
+
+  (define (motor-test)
+
+    (define m1 (my-motor "red"))
+    (define m2 (my-motor "green"))
+    (define m3 (my-motor "blue"))
+
+    (define internal
+      (beside
+        m1 m2 m3))
+
+    (define example1
+      (wooden-level internal))
+
+    (simulate example1))
+
+
+  (define (piv-test)
+    (define internal
+      (above
+       ;(ball)
+      ; (space 20)
+       (beside
+        (pendulum)
+        (pendulum)
+        (pendulum)
+        (pendulum)
+        (pendulum '(500000 0))
+        (pendulum '(500000 0)))))
+
+    (define example1
+      (wooden-level internal))
+
+    (simulate example1))
+
+
+
+  
+  
+  
+
+  (define (cool-test)
+    
+    (define internal
+      (above
+       (apply beside
+              (map ball (range 3)))
+       (make-dynamic (circle 50 "solid" "blue"))))
+
+    (define example1
+      (borders
+       (overlay
+        internal
+        (square 300 "solid" "white"))))
+
+    (simulate example1))
+
+  )
+
+
+
+
+
+
+
+
+
+
+
