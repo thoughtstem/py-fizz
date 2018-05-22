@@ -589,9 +589,9 @@
 
                                             (py-set 'energy_loss (py-dot 'arbiter 'total_ke))
 
-                                            #;`(print (+ "Friction    " (string friction) "\n"
-                                                       "Restitution " (string restitution) "\n"
-                                                       "Impulse     " (string total_impulse) "\n"
+                                            #;`(print (+ ;"Friction    " (string friction) "\n"
+                                                       ;"Restitution " (string restitution) "\n"
+                                                       ;"Impulse     " (string total_impulse) "\n"
                                                        "Energy loss " (string energy_loss)))
 
                                            
@@ -762,10 +762,11 @@
     (py-set (format-s "~a.group" name)
             (id (pymunk-obj-dynamic x))))
 
-  ;Should be able to write out the embedded image here.  It's inside the dynamic/cosmetic object...
+  
+  (make-directory* "./py-fizz-images")
   (define path
-    (format "./~a" (format "~a.png"
-                           (pymunk-obj-name x))))
+    (format "./py-fizz-images/~a" (format "~a.png"
+                                          (pymunk-obj-name x))))
 
   (h:save-image (get-image phys) path)
   
@@ -818,12 +819,15 @@
   (define objs (reverse (pymunk-obj-list thing)))
 
   (define pre (preview thing))
+
+
+  
   
   (compile (apply append-py*
                   (append (map append-call (map obj->python-fun objs))
                           (filter (not/c empty?)
                                   (map obj->relational-after-constructs objs))))
-           "demo.py"
+           "py-fizz.py"
            (h:image-width pre)
            (h:image-height pre)))
 
@@ -1043,6 +1047,8 @@
                              (py-if (py-and (py-not 'f.active) (py-not 'game-already-over))
                                     `(game-over #f)))
 
+                  (py-if `(= 0 (len enemies))
+                         `(return #t))
                   
                   (py-for-in (f 'enemies)
                              (py-if (py-or 'f.active 'game-already-over)

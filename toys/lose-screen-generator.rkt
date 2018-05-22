@@ -9,18 +9,21 @@
              (make-color 0 0 0 100)))
 
 (define msg
-  (text/font "Game Over" 40 "red"
+  (text/font "Game Over" 40 "orange"
              "Gill Sans" 'swiss 'normal 'bold #f))
 
 (define dude
-  (bitmap "/Users/thoughtstem/Dev/Python/py-fizz/toys/imgs/stick-figure.png"))
+  (overlay
+   (bitmap "/Users/thoughtstem/Dev/Python/py-fizz/toys/imgs/stick-figure.png")
+   (circle 40 "solid" "orange")))
 
 
 (define lose-screen
   (overlay (above msg
                 (circle 40 "solid" "transparent")
                 (beside dude
-                        (text "(Don't let people die!)" 16 "red")))
+                        (circle 10 "solid" "transparent")
+                        (text "(Don't let people die!)" 16 "orange")))
          base))
 
 lose-screen
@@ -33,13 +36,16 @@ lose-screen
              "Gill Sans" 'swiss 'normal 'bold #f))
 
 (define dude2
-  (bitmap "/Users/thoughtstem/Dev/Python/py-fizz/toys/imgs/ghost.png"))
+  (overlay
+   (bitmap "/Users/thoughtstem/Dev/Python/py-fizz/toys/imgs/ghost.png")
+   (circle 40 "solid" "green")))
 
 
 (define win-screen
   (overlay (above msg2
                 (circle 40 "solid" "transparent")
-                (beside dude
+                (beside dude2
+                        (circle 10 "solid" "transparent")
                         (text "(You got them all!)" 16 "green")))
          base))
 
