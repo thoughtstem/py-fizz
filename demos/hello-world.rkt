@@ -3,7 +3,7 @@
 (require py-fizz) 
  
 ;Just for testing on Stephen's computer.  Remove before deploying...
-(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
+;(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
  
 (define ball
   (make-dynamic

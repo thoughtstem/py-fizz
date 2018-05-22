@@ -57,7 +57,10 @@
          simulate
 
          toggle-static
-         set-package-path!)
+         set-package-path!
+
+         must-survive
+         must-die)
 
 
 (define (default-package-path)
@@ -501,6 +504,19 @@
                           (py-set me.friction `(* 1.0 ,e))))))
 
 
+(define/contract (must-survive p)
+  (-> physical? physical?)
+  (add-after-construct p
+                       (λ(me py-obj)
+                         (py-begin
+                          `(friends.append ,(obj-name me))))))
+
+(define/contract (must-die p)
+  (-> physical? physical?)
+  (add-after-construct p
+                       (λ(me py-obj)
+                         (py-begin
+                          `(enemies.append ,(obj-name me))))))
 
 
 (define (hidden o)
@@ -762,7 +778,7 @@
                                       (format-s "~a_image" name))))
 
   (define sixth-line
-    `(user_shapes.append ,name))
+    `(user-shapes.append ,name))
 
   (define return-line
     name)
@@ -856,13 +872,43 @@
 
 (define (setup-code w h)
   (py-begin (py-set 'w w)
-        (py-set 'h h)
-        (py-set 'user_shapes '[hy-SQUARE])
-        (py-set 'image_bindings '[hy-SQUARE])
-        (py-set 'pivots '[hy-SQUARE])
-        (py-set 'connected_shapes '[hy-SQUARE])
-        (py-set 'click-handled 2)
-        `(window "Most Awesome Thing Ever" w h)))
+
+      
+            (py-set 'h h)
+            (py-set 'user_shapes '[hy-SQUARE])
+            (py-set 'image_bindings '[hy-SQUARE])
+            (py-set 'friends '[hy-SQUARE])
+            (py-set 'enemies '[hy-SQUARE])
+            (py-set 'pivots '[hy-SQUARE])
+            (py-set 'connected_shapes '[hy-SQUARE])
+            (py-set 'click-handled 2)
+        
+            (py-set 'the-window `(window "Most Awesome Thing Ever" w h))
+            (py-set 'game-already-over #f)
+
+                    
+            (py-define (create-end-screen won?)
+                       (py-begin
+                        '(global image-bindings)
+                        '(global user-shapes)
+                        (py-set 'end-screen-img
+                                `(pygame.image.load
+                                   (if won?
+                                       ,(string-append package-path
+                                                  "/images/win-screen.png")
+                                       ,(string-append package-path
+                                                  "/images/lose-screen.png")))) ;Make this
+                  
+                        (py-set 'end-screen `(static_box ,(py-tuple `(/ w 2)
+                                                                    `(/ h 2)) 0 0))
+                  
+                        `(image-bindings.append ,(py-list 'end-screen
+                                                          'end-screen-img))
+
+                        `(user-shapes.append end-screen)
+                        'end-screen))
+
+            ))
 
 
 (define (boiler w h user-hy-codes)
@@ -976,6 +1022,37 @@
                   `(global click-handled)
                   (py-set 'click-handled '(max 0 (- click-handled 1)))))
 
+
+      (py-define (game-over won?)
+                 (py-begin
+                  `(global game-already-over)
+                  `(print "Game over!")
+                  
+                  (py-for-in (f 'user-shapes)
+                             (py-set 'f.damping 0.01))
+
+                  (py-set 'game-already-over #t)
+
+                  (py-set 'end-screen `(create-end-screen won?))))
+
+
+      (py-define (check-friends-and-enemies keys)
+                 (py-begin
+                  `(global friends)
+                  (py-for-in (f 'friends)
+                             (py-if (py-and (py-not 'f.active) (py-not 'game-already-over))
+                                    `(game-over #f)))
+
+                  
+                  (py-for-in (f 'enemies)
+                             (py-if (py-or 'f.active 'game-already-over)
+                                    `(return #t)))
+
+                  `(game-over #t)))
+
+
+
+      '(add-observer check-friends-and-enemies)
       '(add-observer clear-click)
       '(add-observer (draw-images #t))
       '(add-observer draw_pivot_lines)

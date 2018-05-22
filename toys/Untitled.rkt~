@@ -1,0 +1,9 @@
+#lang racket
+
+(require 2htdp/image)
+
+(define base
+  (rectangle 300
+             300
+             "solid"
+             (make-color 100 100 100 100)))

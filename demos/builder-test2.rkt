@@ -1,7 +1,9 @@
 #lang racket
 
-(require py-fizz) 
+(require py-fizz)
 
+(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
+ 
 
 ;(simulate #|a|# (wooden-level #|with a|# (cannon #|that shoots out a|# (car))))
 
@@ -19,7 +21,7 @@
   (beside
    (car 1
     (toggle-static
-     (cannon balloon-builder 10000 170)))
+     (cannon (car) 10000 170)))
    
    (h-space 200)
    
