@@ -420,7 +420,7 @@ compose them to make new ones.
  the destroy-after parameters low.
 }
 
-@defproc[(fragments
+@defproc[(cannon
           [object (or/c dynamic? static? cosmetic? composite?)]
           [energy number? 10000]
           [angle  number? 0])

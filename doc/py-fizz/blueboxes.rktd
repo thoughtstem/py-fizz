@@ -62,7 +62,7 @@ procedure
   energy : number? = 100000
   destroy-after : number? = 50
 procedure
-(fragments object [energy angle]) -> static?
+(cannon object [energy angle]) -> static?
   object : (or/c dynamic? static? cosmetic? composite?)
   energy : number? = 10000
   angle : number? = 0
