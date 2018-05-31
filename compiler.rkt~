@@ -21,6 +21,8 @@
          friction
          spring
          angle-spring
+         ttl
+         mass
          
          box-collider
          circle-collider
@@ -91,7 +93,7 @@
   (string->symbol (apply (curry format s) insertions)))
 
 
-(struct layout   (id x y w h name preview-f children)                #:transparent)
+(struct layout   (id x y w h name preview-f children)                                             #:transparent)
 (struct physical (id x y after-construct relational-after-construct collider image dynamic?)      #:transparent)
 (struct cosmetic (id x y after-construct relational-after-construct image)                        #:transparent)
   
@@ -329,10 +331,8 @@
                [dynamic? (not (physical-dynamic? i))]))
 
 (define/contract (make-dynamic i
-                               #:collider (type circle-collider)
-                               #:mass (mass 10)
-                               )
-  (->* ((or/c h:image? cosmetic? layout? physical?)) (#:collider any/c #:mass number?) physical?)
+                               #:collider (type circle-collider))
+  (->* ((or/c h:image? cosmetic? layout? physical?)) (#:collider any/c) physical?)
 
   (define img (preview i))
   (define obj
@@ -344,10 +344,7 @@
               img
               #t))
 
-  (add-after-construct obj
-                     (λ(me py-obj)
-                       (py-begin
-                        (py-set `(hy-DOT ,(obj-name me) mass) mass)))))
+  obj)
 
 (define/contract (make-static i #:collider (type circle-collider))
   (->* ((or/c h:image? cosmetic? layout? physical?)) (#:collider any/c) physical?)
@@ -422,7 +419,6 @@
                        (define me.hit      (format-s "obj~a.hit" (id me)))
                        (define me.position (format-s "obj~a.position" (id me)))
                        (py-begin
-                        #;'(print "YO DOG")
                         `(,me.hit ,(py-list (first dir) (second dir))
                                   ,me.position)))))
 
@@ -434,6 +430,22 @@
                      (λ(me py-obj)
                        (py-begin
                         `(motor ,(obj-name me) ,speed)))))
+
+(define/contract (mass m p)
+  (-> number? physical? physical?)
+  (add-after-construct p
+                     (λ(me py-obj)
+                       (py-begin
+                        (py-set `(hy-DOT ,(obj-name me) body mass) m)))))
+
+
+(define/contract (ttl t p)
+  (-> number? physical? physical?)
+  (add-after-construct p
+                       (λ(me py-obj)
+                         (py-begin
+                          `(temp-shapes.append ,(py-list (obj-name me)
+                                                         t))))))
 
 
 ;I don't love that dist is a param.  Better to set based on initial object positions
@@ -452,8 +464,7 @@
 (define/contract (angle-spring f s
                                (angle 0)
                                (stiffness 0)
-                               (damping 0)
-                               ) 
+                               (damping 0)) 
   (->* (physical? physical?) (number? number? number?) physical?)
   (add-relational-after-construct f
                                   (λ(me py-obj)
@@ -589,18 +600,26 @@
 
                                             (py-set 'energy_loss (py-dot 'arbiter 'total_ke))
 
-                                            #;`(print (+ ;"Friction    " (string friction) "\n"
-                                                       ;"Restitution " (string restitution) "\n"
-                                                       ;"Impulse     " (string total_impulse) "\n"
-                                                       "Energy loss " (string energy_loss)))
+                                            (py-set 'other-shape-mass (py-dot 'arbiter 'shapes (py-list 1) 'body 'mass))
+
+
+                                            #;(py-if (py-and
+                                                    (py-gt 'friction    friction-thresh)
+                                                    (py-gt 'energy-loss energy-loss-thresh))
+                                                   `(print (+
+                                                            ;"Friction    " (string friction) "\n"
+                                                            ;"Restitution " (string restitution) "\n"
+                                                            ;  ,(symbol->string (obj-name me)) " Impulse     " (string total_impulse) "\n"
+                                                            ;   "     Energy loss " (string energy_loss) "\n"
+                                                            "     Other shape mass " (string other-shape-mass) "\n"
+                                                            )))
 
                                            
                                             
                                             (py-if (py-and
                                                     (py-gt 'friction    friction-thresh)
                                                     (py-gt 'energy-loss energy-loss-thresh))
-                                                   py-code)
-                                            )
+                                                   py-code))
                                  (py-set 'space
                                          (py-dot (obj-name f) 'body 'space))
 
@@ -829,7 +848,11 @@
                                   (map obj->relational-after-constructs objs))))
            "py-fizz.py"
            (h:image-width pre)
-           (h:image-height pre)))
+           (h:image-height pre))
+
+  (if (file-exists? "./screenshot.jpg")
+      (h:bitmap/file "./screenshot.jpg")
+      #f))
 
 (define (preview2 thing)
   (define objs (pymunk-obj-list thing))
@@ -860,7 +883,14 @@
   ;(displayln final)
   (with-output-to-file file-name #:exists 'replace
     (lambda () (printf final)))
-  (system (string-append "PYTHONPATH=" package-path "/pygame/pyphysicssandbox PATH=$PATH:/usr/local/bin/ python3 " file-name)))
+  (define cmd (string-append "PYTHONPATH=" package-path "/pygame/pyphysicssandbox PATH=$PATH:/usr/local/bin/ python3 " file-name))
+  (with-output-to-file "run-my-py-fizz.py" #:exists 'replace
+    (lambda ()
+      (printf "#!/usr/bin/python\n")
+      (printf "import os\n")
+      (printf (string-append "os.system(\"" cmd "\")"))))
+  (system "chmod +x run-my-py-fizz.py")
+  (system cmd))
 
 
 
@@ -883,6 +913,7 @@
             (py-set 'image_bindings '[hy-SQUARE])
             (py-set 'friends '[hy-SQUARE])
             (py-set 'enemies '[hy-SQUARE])
+            (py-set 'temp-shapes '[hy-SQUARE])
             (py-set 'pivots '[hy-SQUARE])
             (py-set 'connected_shapes '[hy-SQUARE])
             (py-set 'click-handled 2)
@@ -924,8 +955,7 @@
      ;User code
      user-hy-codes
 
-     ;Python crap below
-
+ 
     
      (py-begin
       ;image-for
@@ -1031,6 +1061,8 @@
                  (py-begin
                   `(global game-already-over)
                   `(print "Game over!")
+
+                  
                   
                   (py-for-in (f 'user-shapes)
                              (py-set 'f.damping 0.01))
@@ -1056,18 +1088,47 @@
 
                   `(game-over #t)))
 
+      (py-define (tick-temp-shapes keys)
+                 (py-begin
+                  `(global temp-shapes)
+                  (py-set 'new-temp-shapes '[hy-SQUARE])
+                  (py-for-in (f 'temp-shapes)
+                             (py-set 'shape     (py-dot f (py-list 0)))
+                             (py-set 'time-left (py-dot f (py-list 1)))
+                             (py-set 'new-time-left `(- time-left 1))
+
+                             (py-set (py-dot f (py-list 1)) 'new-time-left)
+                             
+                             (py-if (py-lt 'time-left 0)
+                                    `(deactivate shape)
+                                    `(new-temp-shapes.append ,(py-list 'shape 'new-time-left))))
+
+                  (py-set 'temp-shapes 'new-temp-shapes)))
+
+      (py-define (take-final-screenshot keys)
+                 (py-if 'game-already-over
+                        `(take-screenshot)))
+
+      (py-define (take-screenshot)
+                 (py-set 'screen '(pygame.display.get-surface))
+                 `(pygame.image.save screen "screenshot.jpg"))
 
 
-      '(add-observer check-friends-and-enemies)
+      '(add-observer tick-temp-shapes)
       '(add-observer clear-click)
       '(add-observer (draw-images #t))
       '(add-observer draw_pivot_lines)
       '(add-observer draw_connection_lines)
       '(add-observer (draw-images #f))
 
+      '(add-observer check-friends-and-enemies)
 
+      '(add-observer take-final-screenshot)
       
-      '(run))))
+      '(run)
+      
+
+      )))
 
  ; (pretty-print full-hy)
   

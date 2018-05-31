@@ -452,7 +452,367 @@ compose them to make new ones.
 
 @section{py-fizz Low Level}
 
-Coming soon...!
+@subsection{Top Level}
+
+@defproc[(preview
+          [object (or/c dynamic? static? cosmetic? composite?)])
+         image?]{
+
+  Any object or composite you make can be passed into the preview function
+  to get an image of what it will look like.
+}
+
+@defproc[(simulate
+          [object (or/c dynamic? static? cosmetic? composite?)])
+         void?]{
+
+  This triggers the actual compilation to Python and runs the game/simulation.
+}
+
+
+@subsection{Basic Constructors}
+
+@defproc[(make-static
+          [object (or/c h:image? cosmetic? layout? physical?)]
+          [#:collider collider collider? circle-collider])
+         static?]{
+
+
+}
+
+@defproc[(make-dynamic
+          [object (or/c h:image? cosmetic? layout? physical?)]
+          [#:collider collider collider? circle-collider])
+         dynamic?]{
+
+
+}
+
+@defproc[(make-cosmetic
+          [object (or/c h:image? cosmetic? layout?)])
+         cosmetic?]{
+
+}
+
+@defproc[(make-pivot
+          [object (or/c h:image? cosmetic?)])
+         pivot?]{
+
+}
+
+        
+@defproc[(circle
+          [radius number?]
+          [fill-mode mode?]
+          [color color?])
+         cosmetic?]{
+
+  A lifted version of the 2htdp/image function (see those docs for details).
+  Returns a cosmetic.
+}
+
+@defproc[(rectangle
+          [width number?]
+          [height number?]
+          [fill-mode mode?]
+          [color color?])
+         cosmetic?]{
+
+  A lifted version of the 2htdp/image function (see those docs for details).
+  Returns a cosmetic.
+}
+
+@defproc[(square
+          [size number?]
+          [fill-mode mode?]
+          [color color?])
+         cosmetic?]{
+
+  A lifted version of the 2htdp/image function (see those docs for details).
+  Returns a cosmetic.
+}
+
+
+@subsection{Setting Physical Properties of Objects}
+
+
+
+@defproc[(motorize
+          [speed number?]
+          [object dynamic?])
+         dynamic?]{
+
+
+}
+
+
+@defproc[(gravity
+          [direction (list/c number? number?)]
+          [object dynamic?])
+         dynamic?]{
+
+
+}
+
+@defproc[(elasticity
+          [amount number?]
+          [object dynamic?])
+         dynamic?]{
+
+
+}
+
+@defproc[(angle
+          [amount number?]
+          [object (or/c dynamic? static?)])
+         dynamic?]{
+
+
+}
+         
+@defproc[(friction
+          [object (or/c dynamic? static?)]
+          [energy number? 10000]
+          [angle  number? 0])
+         static?]{
+
+
+}
+
+
+
+@defproc[(ttl
+          [time number?]
+          [object (or/c dynamic? static? cosmetic?)])
+         dynamic?]{
+
+
+}
+
+
+@defproc[(mass
+          [amount number?]
+          [object dynamic?])
+         dynamic?]{
+
+
+}  
+ 
+
+@defproc[(initial-velocity
+          [direction (list/c number? number?)]
+          [object dynamic?])
+         dynamic?]{
+
+  
+}
+
+@defproc[(toggle-static
+          [object (or/c dynamic? static?)])
+         (or/c dynamic? static?)]{
+
+
+}
+ 
+@defproc[(width
+          [object (or/c dynamic? static? cosmetic? composite?)])
+         number?]{
+
+
+}
+         
+@defproc[(height
+          [object (or/c dynamic? static? cosmetic? composite?)])
+         number?]{
+
+
+}
+
+@subsection{Making composite objects}
+
+The easiest way to make a composite object is to use a spatial layout function:
+above, beside, or overlay.
+
+These place two objects in a spatial relation to each other.
+
+Additionally, objects can be associated with physical properties: e.g.
+they might have a joint connecting them.  If this is the case, you'll
+create the composite object with a two-step process --
+1) establish the physical relation
+ship (e.g. with the spring-joint function), and then place the two objects
+into a spatial relationship (e.g. with the above function).
+
+@racketblock[(let* ([b1 (bowling-ball)]
+                    [b2 (bowling-ball)]
+                    [b1-with-connection
+                     (pin b1 b2)])
+               (simulate
+                (above b1-with-connection b2)))]
+
+Note that the pin function takes b1 and returns a new version of b1
+that has a pin joint relationship to b2.  But you still need to place
+both b1-with-connection and b2 into a relation with each other.
+
+(You'll get a runtime error if you don't.)
+
+@subsubsection{Spatial Relations for Composite Objects}
+
+Spatial relations may be established between any two objects.  They
+do not need to be related to each other physically.
+
+@defproc[(above
+          [object (or/c dynamic? static? cosmetic? composite?)]
+          ...)
+         composite?]{
+
+
+}
+
+@defproc[(beside
+          [object (or/c dynamic? static? cosmetic? composite?)]
+          ...)
+         composite?]{
+
+
+}
+
+@defproc[(overlay
+          [object (or/c dynamic? static? cosmetic? composite?)]
+          ...)
+         composite?]{
+
+
+}
+
+@subsubsection{Physical Relations for Composite Objects}
+
+As stated above, spatial relations may be established between any two objects.  They
+do not need to be related to each other physically.
+
+The opposite, however, is not true.  If you create a physical relationship between
+two objects, you must ALSO relate them spatially.
+
+Think of it this way: If you say that two objects are physically related (e.g.
+they have a connecting joint), you also need to say where those objects are in
+the universe.  The only way to place things into the universe is to relate them
+spatially to each other.
+
+Keep that in mind with all of the functions in this subsection.
+
+@defproc[(gear
+          [object1 dynamic?]
+          [object2 dynamic?])
+         dynamic?]{
+
+  The two objects will rotate together.
+
+  Returns a new version of the first object.
+}
+
+
+@defproc[(connect-pivot
+          [pivot pivot?]
+          [object (or/c dynamic? static?)])
+         pivot?]{
+
+  Causes the object to swing around the pivot point.
+
+  Returns a new version of the pivot.
+}
+
+@defproc[(pin
+          [object1 (or/c dynamic? static?)]
+          [object2 (or/c dynamic? static?)])
+         dynamic?]{
+
+  Establishes a rigid "rod" between the two objects.
+
+  Returns a new version of the first object.
+}
+
+         
+@defproc[(spring
+          [object1 (or/c dynamic? static?)]
+          [object2 (or/c dynamic? static?)]
+          [distance number?])
+         dynamic?]{
+
+  Establishes a springy connection between two objects.  (Used for balloon strings.)
+
+  Returns a new version of the first object.
+}          
+
+
+@defproc[(angle-spring
+          [object1 (or/c dynamic? static?)]
+          [object2 (or/c dynamic? static?)]
+          [angle       number? 0]
+          [stiffness   number? 0]
+          [damping     number? 0])
+         dynamic?]{
+
+  The two objects will prefer to be at the same angle.  They will spring back
+  to that angle if forces do not prevent it.
+}
+
+@subsection{Runtime Behaviours}
+         
+@defproc[(on-collide
+          [object (or/c dynamic? static? cosmetic? composite?)]
+          [callback callback?]
+          [#:friction  friction-thresh 0]
+          [#:energy-loss energy-loss-thresh 0])
+         (or/c dynamic? static? cosmetic? composite?)]{
+
+  If the object suffers a collision, the callback is triggered.
+
+  Collisions can be filtered out based on friction and kinetic energy loss.
+}
+
+@defproc[(on-click
+          [object (or/c dynamic? static? cosmetic? composite?)]
+          [callback callback?])
+         (or/c dynamic? static? cosmetic? composite?)]{
+
+  If the object is clicked, the callback is triggered.
+}
+                
+@defproc[(spawn
+          [object (or/c dynamic? static? cosmetic? composite?)]
+          [destroy-self? boolean? #f])
+         callback?]{
+
+  Spawns a new object.  Only useful in the context of on-click or on-collide.
+}
+
+@defproc[(must-survive
+          [object (or/c dynamic? static?)])
+         (or/c dynamic? static?)]{
+
+  The given object triggers a lose screen if it
+  is destroyed.
+}
+
+@defproc[(must-die
+          [object (or/c dynamic? static?)])
+         (or/c dynamic? static?)]{
+
+  The given object triggers a win screen if all such
+  objects are destroyed.
+}
+
+
+
+@subsection{Misc}
+         
+@defproc[(set-package-path!
+          [path string?])
+         void?]{
+  If you have the py-fizz package installed in a weird place
+  (like I do when I'm developing it).
+}
+         
+
 
 
 
