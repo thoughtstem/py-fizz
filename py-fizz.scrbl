@@ -8,7 +8,10 @@ Fun with fizzics!
 
 @image[#:scale 1]{./doc-images/BalloonCannon2.gif}
 
-Py-fizz is a language for creating physics simulations and games.  Compiles to Python and runs in the context of Pygame and Pymunk.
+Py-fizz is a language for creating physics simulations and games.
+Compiles to Python and runs in the context of Pygame and Pymunk.
+But Racket is the compile-time language, and provides a purely functional
+API for doing awesome physics stuff.
 
 Py-fizz is divided into two languages.
 The first is a higher-level one, used for creating levels and simulations out of pre-built
