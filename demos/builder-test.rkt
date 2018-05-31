@@ -2,7 +2,7 @@
 
 (require py-fizz)
 
-;(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
+(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
  
 
 (define thing

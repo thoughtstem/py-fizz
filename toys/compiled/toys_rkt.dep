@@ -1,1 +1,1 @@
-("6.9" ("a51cafb26dfc603041491d55acc7cc4591f19fc8" . "1dbab6e128f9f5bf7f1d8a5bf3e6090c2799a9e9") (collects #"2htdp" #"image.rkt") (collects #"py-fizz" #"compiler.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
+("6.9" ("4f9ad5b4364513b298da72c3514f554362793211" . "72ce4ed2aba9edbc013900e73e984cb53a661bed") (collects #"2htdp" #"image.rkt") (collects #"py-fizz" #"compiler.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"wxme" #"read.rkt"))

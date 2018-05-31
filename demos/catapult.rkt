@@ -2,7 +2,7 @@
 
 (require py-fizz)
 
-;(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
+(set-package-path! "/Users/thoughtstem/Dev/Python/py-fizz")
 
 
 
@@ -16,7 +16,6 @@
 (define b-with-behaviour
   (on-collide b 
               (spawn to-spawn #t)))
-
 (simulate
  (wooden-level
   (catapult

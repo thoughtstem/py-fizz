@@ -1,0 +1,30 @@
+#lang scribble/manual
+ 
+@title{py-fizz}
+
+A high-level language for creating physics simulations and games.  Compiles to Python and runs in the context of Pygame and Pymunk.
+
+There is a high level py-fizz language, used for creating levels and simulations out of pre-built gadgets: e.g. Bowling balls, balloons, motors, etc.  Eg.:
+
+@racketblock[(simulate 
+                (wooden-level
+                  (bowling-ball)))]
+
+There is a lower-level language for defining your own such gadgets. For example, the bowling-ball gadget might be defined as:
+
+@racketblock[
+(define (bowling-ball)
+  (mass 100000
+        (make-dynamic (h:bitmap "./imgs/bowling-ball.png"))))
+]
+
+These docs describe both the high and low level languages.
+
+@section{py-fizz High Level}
+
+
+@section{py-fizz Low Level}
+
+
+
+
