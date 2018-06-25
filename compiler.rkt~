@@ -872,9 +872,17 @@
                      bg)) objs)))
 
 
-(define circle    (compose make-cosmetic h:circle))
-(define square    (compose make-cosmetic h:square))
-(define rectangle (compose make-cosmetic h:rectangle))
+(define (circle r t c)
+  (make-cosmetic
+   (h:circle r t c)))
+
+(define (square r t c)
+  (make-cosmetic
+   (h:square r t c)))
+
+(define (rectangle w h t c)
+  (make-cosmetic
+   (h:rectangle w h t c)))
 
 
 

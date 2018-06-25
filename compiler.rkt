@@ -57,7 +57,8 @@
          preview
          preview2
          simulate
-
+         simulate-last
+ 
          toggle-static
          set-package-path!
 
@@ -833,6 +834,11 @@
   (py-begin
      f-def
      (py-set obj-name `(,f-name 0 0 #;#f))))
+
+(define (simulate-last)
+  (define file-name "py-fizz.py")
+  (define cmd (string-append "PYTHONPATH=" package-path "/pygame/pyphysicssandbox PATH=$PATH:/usr/local/bin/ python3 " file-name))
+  (system cmd))
 
 (define (simulate thing)
   (define objs (reverse (pymunk-obj-list thing)))
